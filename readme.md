@@ -57,7 +57,7 @@ Open http://localhost:8737 to view your site locally
 
 OR
 
-### 6 Deploy Your Site
+### 6. Deploy Your Site
 ```bash
 deno task deploy
 ```
