@@ -1,0 +1,92 @@
+{
+  "site": {
+    "title": "photorange",
+    "description": "Personal gallery for hobby photos & curated content",
+    "owner": {
+      "name": "Pablo Picasso",
+      "bio": "Passionate about capturing the heart's of the people alongside new colors, shades, framings, and artistic methodologies",
+      "quote": "Everything you can imagine is real.",
+      "hobbies": [
+        "drawing",
+        "art",
+        "photography",
+        "cooking",
+        "frolicking",
+        "pondering"
+      ]
+    }
+  },
+  "navigation": [
+    {
+      "id": "home",
+      "title": "Home",
+      "path": "/"
+    },
+    {
+      "id": "landscape",
+      "title": "landscape",
+      "path": "/landscape"
+    },
+    {
+      "id": "portrait",
+      "title": "portrait",
+      "path": "/portrait"
+    },
+    {
+      "id": "street",
+      "title": "street",
+      "path": "/street"
+    },
+    {
+      "id": "inspo",
+      "title": "Inspo",
+      "path": "/inspo"
+    }
+  ],
+  "galleries": [
+    {
+      "id": "landscape",
+      "title": "landscape",
+      "description": "collection of landscape photos",
+      "cloudinaryTag": "landscape",
+      "layout": "grid"
+    },
+    {
+      "id": "portrait",
+      "title": "portrait",
+      "description": "my friends :)",
+      "cloudinaryTag": "portrait",
+      "layout": "grid"
+    },
+    {
+      "id": "street",
+      "title": "street",
+      "description": "the people of various urban environments and small towns",
+      "cloudinaryTag": "street",
+      "layout": "grid"
+    }
+  ],
+  "inspiration": {
+    "title": "Inspiration & Learning",
+    "description": "Content that inspires and educates",
+    "sections": [
+      {
+        "title": "Videos & Links",
+        "items": [
+          {
+            "title": "Example Video",
+            "url": "https://www.youtube.com/watch?v=example",
+            "type": "video",
+            "description": "Replace with your content"
+          }
+        ]
+      }
+    ]
+  },
+  "theme": {
+    "primaryColor": "#2563eb",
+    "backgroundColor": "#000000",
+    "textColor": "#ffffff",
+    "accentColor": "#3b82f6"
+  }
+}
