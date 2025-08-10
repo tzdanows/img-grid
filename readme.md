@@ -55,6 +55,16 @@ deno task dev
 ```
 Open http://localhost:8737 to view your site locally
 
+OR
+
+### 6 Deploy Your Site
+```bash
+deno task deploy
+```
+[read more here](https://docs.deno.com/deploy/manual/deployctl/)
+*I'll update deployment docs later*
+---
+
 ## Commands
 
 - `deno task setup` - Initial configuration wizard
@@ -62,8 +72,6 @@ Open http://localhost:8737 to view your site locally
 - `deno task add-videos` - Add YouTube videos to inspo page
 - `deno task edit` - Edit all site content
 - `deno task deploy` - Deploy to Deno Deploy
-
-## How It Works
 
 ## How It Works
 
@@ -78,5 +86,3 @@ Open http://localhost:8737 to view your site locally
 3. **Photo Management**: Upload to Cloudinary with matching tags
    - Images automatically appear in galleries
    - Responsive optimization built-in
-   
----
