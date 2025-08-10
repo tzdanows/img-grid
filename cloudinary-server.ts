@@ -286,7 +286,8 @@ function generateHomePage(content: SiteContent): string {
                 </p>
                 
                 <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                    ${content.site.owner.bio.toLowerCase()} a fellow enthusiast of the following:
+                    ${content.site.owner.bio.toLowerCase()} 
+                    <br><br> an enthusiast of the following:
                 </p>
                 
                 <ul class="simple-content-list mb-12">

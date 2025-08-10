@@ -49,92 +49,65 @@ interface SiteContent {
 }
 
 async function setupSite() {
-  console.log("🎨 Media Showcase - Initial Setup\n");
-  console.log("This setup will help you configure your portfolio site with custom galleries.\n");
+  console.log("🎨 Media Showcase - Setup\n");
 
-  // Site owner information
-  console.log("📝 Let's start with your information:\n");
-  
+  // Quick personal info
   const ownerName = await Input.prompt({
-    message: "What's your name/handle?",
+    message: "Your name:",
     default: "untitled",
   });
   
   const ownerBio = await Input.prompt({
-    message: "Brief bio (one word or phrase):",
-    default: "Passionate.",
+    message: "Bio:",
+    default: "Passionate about photography",
   });
   
   const ownerQuote = await Input.prompt({
-    message: "Your favorite quote:",
-    default: "live life at your own tempo; memento mori",
+    message: "Quote:",
+    default: "Everything you can imagine is real",
   });
 
-  // Site title
   const siteTitle = await Input.prompt({
     message: "Site title:",
     default: "My Portfolio",
   });
 
-  // Define primary routes
-  console.log("\n🗂️  Now let's define your gallery routes:");
-  console.log("Each route will automatically use its name as the Cloudinary tag.\n");
-  console.log("For example: route 'portrait' → Cloudinary tag 'portrait'\n");
+  // Gallery routes
+  console.log("\n📸 Gallery Setup");
+  console.log("Routes must match your Cloudinary tags exactly (e.g., 'portrait', 'landscape')\n");
   
-  const numRoutes = await Number.prompt({
-    message: "How many gallery routes do you want? (e.g., 3 for portrait, landscape & street)",
-    default: 3,
-    min: 1,
-    max: 10,
+  const routeInput = await Input.prompt({
+    message: "Enter gallery routes (comma-separated):",
+    default: "portrait, landscape, street",
   });
 
+  const routes = routeInput.split(',').map(r => r.trim()).filter(r => r.length > 0);
+  
   const galleries: SiteContent['galleries'] = [];
   const navigation: SiteContent['navigation'] = [
     { id: "home", title: "Home", path: "/" }
   ];
-  const hobbies: string[] = [];
 
-  for (let i = 0; i < numRoutes; i++) {
-    console.log(`\n📸 Gallery ${i + 1}:`);
-    
-    const routeId = await Input.prompt({
-      message: "Route ID (lowercase, no spaces - e.g., 'portrait', 'landscape', 'street'):",
-      validate: (value) => {
-        if (!value.match(/^[a-z0-9-]+$/)) {
-          return "Please use only lowercase letters, numbers, and hyphens";
-        }
-        return true;
-      },
-    });
-    
-    const routeTitle = await Input.prompt({
-      message: "Display title (e.g., 'Portrait Photography'):",
-      default: routeId.charAt(0).toUpperCase() + routeId.slice(1),
-    });
-    
-    const routeDescription = await Input.prompt({
-      message: "Brief description:",
-      default: `Collection of ${routeTitle.toLowerCase()}`,
-    });
-
+  // Create galleries from routes
+  for (const route of routes) {
     galleries.push({
-      id: routeId,
-      title: routeTitle,
-      description: routeDescription,
-      cloudinaryTag: routeId, // Automatically use route ID as Cloudinary tag
+      id: route.toLowerCase(),
+      title: route.toLowerCase(),
+      description: `${route} photography`,
+      cloudinaryTag: route.toLowerCase(),
       layout: "grid"
     });
 
     navigation.push({
-      id: routeId,
-      title: routeTitle.split(' ')[0], // Use first word for nav
-      path: `/${routeId}`
+      id: route.toLowerCase(),
+      title: route.toLowerCase(),
+      path: `/${route.toLowerCase()}`
     });
   }
 
-  // Ask about inspiration page
+  // Add inspo page
   const hasInspo = await Confirm.prompt({
-    message: "Do you want an 'inspo' (inspiration/links) page?",
+    message: "Include inspiration page?",
     default: true,
   });
 
@@ -146,23 +119,19 @@ async function setupSite() {
     });
   }
 
-  // Hobbies list
-  console.log("\n🎯 Your hobbies/interests (comma-separated):");
+  // Hobbies
   const hobbyInput = await Input.prompt({
-    message: "Hobbies:",
-    default: "photography, art, traveling, reading",
+    message: "Your hobbies (comma-separated):",
+    default: "photography, art, traveling",
   });
   
-  if (hobbyInput) {
-    const hobbyList = hobbyInput.split(',').map(h => h.trim()).filter(h => h.length > 0);
-    hobbies.push(...hobbyList);
-  }
+  const hobbies = hobbyInput ? hobbyInput.split(',').map(h => h.trim()) : [];
 
-  // Create content configuration
+  // Create content
   const content: SiteContent = {
     site: {
       title: siteTitle,
-      description: "Personal gallery for hobby photos & curated content",
+      description: "Personal gallery for photos & curated content",
       owner: {
         name: ownerName,
         bio: ownerBio,
@@ -173,19 +142,12 @@ async function setupSite() {
     navigation: navigation,
     galleries: galleries,
     inspiration: {
-      title: "Inspiration & Learning",
-      description: "Content that inspires and educates",
+      title: "Inspiration",
+      description: "Content that inspires",
       sections: hasInspo ? [
         {
-          title: "Videos & Links",
-          items: [
-            {
-              title: "Example Video",
-              url: "https://www.youtube.com/watch?v=example",
-              type: "video",
-              description: "Replace with your content"
-            }
-          ]
+          title: "Videos",
+          items: []
         }
       ] : []
     },
@@ -199,58 +161,31 @@ async function setupSite() {
 
   // Save configuration
   await Deno.writeTextFile("./content.json", JSON.stringify(content, null, 2));
-  console.log("\n✅ Configuration saved to content.json");
+  console.log("\n✅ Configuration saved!");
 
-  // Create .env file if it doesn't exist
+  // Cloudinary setup
   const envExists = await Deno.stat(".env").catch(() => null);
   if (!envExists) {
-    const createEnv = await Confirm.prompt({
-      message: "Create .env file for Cloudinary configuration?",
-      default: true,
-    });
+    console.log("\n☁️  Cloudinary Setup (get from https://cloudinary.com/console)");
+    
+    const cloudName = await Input.prompt("Cloud Name:");
+    const apiKey = await Input.prompt("API Key:");
+    const apiSecret = await Input.prompt("API Secret:");
 
-    if (createEnv) {
-      console.log("\n☁️  Cloudinary Setup:");
-      console.log("Get your credentials from: https://cloudinary.com/console\n");
-      
-      const cloudName = await Input.prompt({
-        message: "Cloudinary Cloud Name:",
-        default: "your-cloud-name",
-      });
-      
-      const apiKey = await Input.prompt({
-        message: "Cloudinary API Key:",
-        default: "your-api-key",
-      });
-      
-      const apiSecret = await Input.prompt({
-        message: "Cloudinary API Secret:",
-        default: "your-api-secret",
-      });
-
-      const envContent = `# Cloudinary Configuration
-CLOUDINARY_CLOUD_NAME=${cloudName}
+    const envContent = `CLOUDINARY_CLOUD_NAME=${cloudName}
 CLOUDINARY_API_KEY=${apiKey}
 CLOUDINARY_API_SECRET=${apiSecret}`;
 
-      await Deno.writeTextFile("./.env", envContent);
-      console.log("✅ .env file created");
-    }
+    await Deno.writeTextFile("./.env", envContent);
+    console.log("✅ .env created");
   }
 
   // Instructions
-  console.log("\n🎉 Setup complete!\n");
-  console.log("📋 Next steps:");
-  console.log("1. Upload images to Cloudinary with these tags:");
-  galleries.forEach(g => {
-    console.log(`   - Tag '${g.cloudinaryTag}' for ${g.title}`);
-  });
-  console.log("\n2. Run the development server:");
-  console.log("   deno task dev");
-  console.log("\n3. Edit content anytime:");
-  console.log("   deno task edit");
-  console.log("\n4. View your site at:");
-  console.log("   http://localhost:8737");
+  console.log("\n🎉 Setup complete!");
+  console.log("\n📋 Next steps:");
+  console.log(`1. Upload images to Cloudinary with tags: ${routes.join(', ')}`);
+  console.log("2. Run: deno task dev");
+  console.log("3. Visit: http://localhost:8737");
 }
 
 if (import.meta.main) {

@@ -1,16 +1,16 @@
 {
   "site": {
     "title": "photorange",
-    "description": "Personal gallery for hobby photos & curated content",
+    "description": "Personal gallery for photos & curated content",
     "owner": {
       "name": "Pablo Picasso",
-      "bio": "Passionate about capturing the heart's of the people alongside new colors, shades, framings, and artistic methodologies",
-      "quote": "Everything you can imagine is real.",
+      "bio": "interested in art, painting, and learning about people",
+      "quote": "Everything you can imagine is real",
       "hobbies": [
-        "drawing",
+        "food",
+        "painting",
         "art",
         "photography",
-        "cooking",
         "frolicking",
         "pondering"
       ]
@@ -23,14 +23,14 @@
       "path": "/"
     },
     {
-      "id": "landscape",
-      "title": "landscape",
-      "path": "/landscape"
-    },
-    {
       "id": "portrait",
       "title": "portrait",
       "path": "/portrait"
+    },
+    {
+      "id": "landscape",
+      "title": "landscape",
+      "path": "/landscape"
     },
     {
       "id": "street",
@@ -45,39 +45,39 @@
   ],
   "galleries": [
     {
-      "id": "landscape",
+      "id": "portrait",
       "title": "landscape",
-      "description": "collection of landscape photos",
+      "description": "landscapes.",
       "cloudinaryTag": "landscape",
       "layout": "grid"
     },
     {
-      "id": "portrait",
+      "id": "landscape",
       "title": "portrait",
-      "description": "my friends :)",
+      "description": "my friends.",
       "cloudinaryTag": "portrait",
       "layout": "grid"
     },
     {
       "id": "street",
       "title": "street",
-      "description": "the people of various urban environments and small towns",
+      "description": "street photography",
       "cloudinaryTag": "street",
       "layout": "grid"
     }
   ],
   "inspiration": {
-    "title": "Inspiration & Learning",
-    "description": "Content that inspires and educates",
+    "title": "Inspiration",
+    "description": "content that inspires",
     "sections": [
       {
-        "title": "Videos & Links",
+        "title": "",
         "items": [
           {
-            "title": "Example Video",
-            "url": "https://www.youtube.com/watch?v=example",
+            "title": "Creative Studio in Chicago, IL",
+            "url": "https://youtu.be/DVnOYLSlY8E",
             "type": "video",
-            "description": "Replace with your content"
+            "description": "local creatives bring forth art and community"
           }
         ]
       }
