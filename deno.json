@@ -1,0 +1,26 @@
+{
+  "lock": false,
+  "imports": {
+    "@std/http": "jsr:@std/http@^1.0.17"
+  },
+  "tasks": {
+    "dev": "deno run -A --watch=static/,lib/,content.json cloudinary-server.ts",
+    "start": "deno run -A cloudinary-server.ts",
+    "build": "echo 'No build step needed for Cloudinary server'",
+    "check": "deno check **/*.ts",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "setup": "deno run -A scripts/setup.ts",
+    "edit": "deno run -A scripts/edit-content.ts",
+    "add-videos": "deno run -A scripts/add-videos.ts",
+    "deploy": "deployctl deploy cloudinary-server.ts"
+  },
+  "deploy": {
+    "project": "9171486c-7673-4b77-a643-c6fe70529cf1",
+    "exclude": [
+      "**/node_modules"
+    ],
+    "include": [],
+    "entrypoint": "cloudinary-server.ts"
+  }
+}
