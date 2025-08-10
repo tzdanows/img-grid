@@ -63,7 +63,6 @@ deno task deploy
 ```
 [read more here](https://docs.deno.com/deploy/manual/deployctl/)
 *I'll update deployment docs later*
----
 
 ## Commands
 
