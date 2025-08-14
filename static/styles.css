@@ -170,11 +170,11 @@ body {
 
 /* Interactive elements */
 .hover\:text-blue-600:hover {
-  color: rgb(37 99 235);
+  color: #008080;
 }
 
 .hover\:text-gray-900:hover {
-  color: rgb(17 24 39);
+  color: #008080;
 }
 
 .hover\:scale-105:hover {
@@ -467,7 +467,7 @@ body {
 }
 
 .content-link:hover {
-  color: rgb(37 99 235);
+  color: #008080;
 }
 
 .content-duration {
@@ -515,13 +515,18 @@ body {
 
 /* Focus styles for accessibility */
 a:focus {
-  outline: 2px solid rgb(37 99 235);
+  outline: 2px solid #008080;
   outline-offset: 2px;
 }
 
 button:focus {
-  outline: 2px solid rgb(37 99 235);
+  outline: 2px solid #008080;
   outline-offset: 2px;
+}
+
+/* Global link hover color */
+a:hover {
+  color: #008080;
 }
 
 /* Image loading states */

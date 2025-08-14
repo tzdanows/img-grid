@@ -1,17 +1,14 @@
 {
   "site": {
     "title": "photorange",
-    "description": "Personal gallery for photos & curated content",
+    "description": "personal gallery for photos & curated content",
     "owner": {
       "name": "Pablo Picasso",
-      "bio": "interested in art, painting, and learning about people",
+      "bio": "hi! I made this site to showcase my photography and art. I really do hope you enjoy.",
       "quote": "Everything you can imagine is real",
       "hobbies": [
-        "food",
-        "painting",
         "art",
         "photography",
-        "frolicking",
         "pondering"
       ]
     }
@@ -19,7 +16,7 @@
   "navigation": [
     {
       "id": "home",
-      "title": "Home",
+      "title": "home",
       "path": "/"
     },
     {
@@ -39,23 +36,23 @@
     },
     {
       "id": "inspo",
-      "title": "Inspo",
+      "title": "inspo",
       "path": "/inspo"
     }
   ],
   "galleries": [
     {
       "id": "portrait",
-      "title": "landscape",
-      "description": "landscapes.",
-      "cloudinaryTag": "landscape",
+      "title": "portrait",
+      "description": "portrait photography",
+      "cloudinaryTag": "portrait",
       "layout": "grid"
     },
     {
       "id": "landscape",
-      "title": "portrait",
-      "description": "my friends.",
-      "cloudinaryTag": "portrait",
+      "title": "landscape",
+      "description": "landscape photography",
+      "cloudinaryTag": "landscape",
       "layout": "grid"
     },
     {
@@ -67,17 +64,35 @@
     }
   ],
   "inspiration": {
-    "title": "Inspiration",
-    "description": "content that inspires",
+    "title": "inspiration",
+    "description": "content that inspires me",
     "sections": [
       {
-        "title": "",
+        "title": "Videos",
         "items": [
           {
-            "title": "Creative Studio in Chicago, IL",
-            "url": "https://youtu.be/DVnOYLSlY8E",
+            "title": "playing cave on ancient",
+            "url": "https://youtu.be/QxV6PH22FRs",
             "type": "video",
-            "description": "local creatives bring forth art and community"
+            "description": "anubis enthusiasts unite"
+          },
+          {
+            "title": "expanding chicago's 606 trail",
+            "url": "https://youtu.be/Zq281tP9DVQ",
+            "type": "link",
+            "description": "o7"
+          },
+          {
+            "title": "img-grid github",
+            "url": "https://github.com/tzdanows/img-grid",
+            "type": "link",
+            "description": "this website's source code!"
+          },
+          {
+            "title": "wordle",
+            "url": "https://www.nytimes.com/games/wordle/index.html",
+            "type": "link",
+            "description": "nyt/wordle"
           }
         ]
       }

@@ -12,7 +12,7 @@
     "lint": "deno lint",
     "setup": "deno run -A scripts/setup.ts",
     "edit": "deno run -A scripts/edit-content.ts",
-    "add-videos": "deno run -A scripts/add-videos.ts",
+    "add-links": "deno run -A scripts/add-links.ts",
     "deploy": "deployctl deploy cloudinary-server.ts"
   },
   "deploy": {

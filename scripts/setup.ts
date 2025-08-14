@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import { Input, Confirm, Number } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
+import { Input, Confirm, Number, Select } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
 
 interface SiteContent {
   site: {
@@ -51,25 +51,33 @@ interface SiteContent {
 async function setupSite() {
   console.log("🎨 Media Showcase - Setup\n");
 
-  // Quick personal info
+  // Site title first
+  const siteTitle = await Input.prompt({
+    message: "Site title:",
+    default: "My Portfolio",
+  });
+
+  // Owner information
+  console.log("\n👤 Personal Information");
   const ownerName = await Input.prompt({
     message: "Your name:",
     default: "untitled",
   });
   
-  const ownerBio = await Input.prompt({
-    message: "Bio:",
-    default: "Passionate about photography",
+  // Main bio/description - can be multiple paragraphs
+  console.log("\n📝 Main Description (you can use \\n for multiple paragraphs)");
+  const rawDescription = await Input.prompt({
+    message: "Main site description:",
+    default: "I made this site to provide a platform to share media associated with my interests. I hope you'll enjoy your stay",
   });
   
+  // Process description to handle multiple paragraphs
+  const descriptionParagraphs = rawDescription.split('\\n').map(p => p.trim()).filter(p => p.length > 0);
+  
+  // Quote (optional)
   const ownerQuote = await Input.prompt({
-    message: "Quote:",
-    default: "Everything you can imagine is real",
-  });
-
-  const siteTitle = await Input.prompt({
-    message: "Site title:",
-    default: "My Portfolio",
+    message: "Favorite quote (optional, press Enter to skip):",
+    default: "",
   });
 
   // Gallery routes
@@ -119,13 +127,14 @@ async function setupSite() {
     });
   }
 
-  // Hobbies
+  // Hobbies (optional)
+  console.log("\n🎯 Hobbies (optional - leave empty to skip this section)");
   const hobbyInput = await Input.prompt({
-    message: "Your hobbies (comma-separated):",
-    default: "photography, art, traveling",
+    message: "Your hobbies (comma-separated, or press Enter to skip):",
+    default: "",
   });
   
-  const hobbies = hobbyInput ? hobbyInput.split(',').map(h => h.trim()) : [];
+  const hobbies = hobbyInput ? hobbyInput.split(',').map(h => h.trim()).filter(h => h.length > 0) : [];
 
   // Create content
   const content: SiteContent = {
@@ -134,9 +143,9 @@ async function setupSite() {
       description: "Personal gallery for photos & curated content",
       owner: {
         name: ownerName,
-        bio: ownerBio,
-        quote: ownerQuote,
-        hobbies: hobbies
+        bio: descriptionParagraphs.join('|'),  // Using | as paragraph separator
+        quote: ownerQuote.length > 0 ? ownerQuote : undefined,
+        hobbies: hobbies.length > 0 ? hobbies : undefined
       }
     },
     navigation: navigation,
@@ -164,20 +173,31 @@ async function setupSite() {
   console.log("\n✅ Configuration saved!");
 
   // Cloudinary setup
+  console.log("\n☁️  Cloudinary Configuration");
   const envExists = await Deno.stat(".env").catch(() => null);
-  if (!envExists) {
-    console.log("\n☁️  Cloudinary Setup (get from https://cloudinary.com/console)");
+  
+  if (envExists) {
+    const overwriteCloudinary = await Confirm.prompt({
+      message: "Cloudinary configuration already exists. Do you want to update it?",
+      default: false,
+    });
     
-    const cloudName = await Input.prompt("Cloud Name:");
-    const apiKey = await Input.prompt("API Key:");
-    const apiSecret = await Input.prompt("API Secret:");
-
-    const envContent = `CLOUDINARY_CLOUD_NAME=${cloudName}
-CLOUDINARY_API_KEY=${apiKey}
-CLOUDINARY_API_SECRET=${apiSecret}`;
-
-    await Deno.writeTextFile("./.env", envContent);
-    console.log("✅ .env created");
+    if (overwriteCloudinary) {
+      await setupCloudinary();
+    } else {
+      console.log("✅ Keeping existing Cloudinary configuration");
+    }
+  } else {
+    const setupCloud = await Confirm.prompt({
+      message: "Would you like to set up Cloudinary now?",
+      default: true,
+    });
+    
+    if (setupCloud) {
+      await setupCloudinary();
+    } else {
+      console.log("⚠️  Skipping Cloudinary setup - site will use mock images");
+    }
   }
 
   // Instructions
@@ -186,6 +206,32 @@ CLOUDINARY_API_SECRET=${apiSecret}`;
   console.log(`1. Upload images to Cloudinary with tags: ${routes.join(', ')}`);
   console.log("2. Run: deno task dev");
   console.log("3. Visit: http://localhost:8737");
+}
+
+async function setupCloudinary() {
+  console.log("\n📋 Get your credentials from https://cloudinary.com/console");
+  
+  const cloudName = await Input.prompt({
+    message: "Cloud Name:",
+    validate: (value) => value.length > 0 || "Cloud Name is required",
+  });
+  
+  const apiKey = await Input.prompt({
+    message: "API Key:",
+    validate: (value) => value.length > 0 || "API Key is required",
+  });
+  
+  const apiSecret = await Input.prompt({
+    message: "API Secret:",
+    validate: (value) => value.length > 0 || "API Secret is required",
+  });
+
+  const envContent = `CLOUDINARY_CLOUD_NAME=${cloudName}
+CLOUDINARY_API_KEY=${apiKey}
+CLOUDINARY_API_SECRET=${apiSecret}`;
+
+  await Deno.writeTextFile("./.env", envContent);
+  console.log("✅ Cloudinary configuration saved to .env");
 }
 
 if (import.meta.main) {
