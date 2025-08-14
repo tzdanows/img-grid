@@ -43,7 +43,7 @@ This will:
 ### 4. Add Content
 ```bash
 # add videos or links to your inspiration page
-deno task add-videos
+deno task add-links
 
 # edit all content
 deno task edit
@@ -68,7 +68,7 @@ deno task deploy
 
 - `deno task setup` - Initial configuration wizard
 - `deno task dev` - Development server with hot reload
-- `deno task add-videos` - Add YouTube videos to inspo page
+- `deno task add-links` - Add YouTube videos to inspo page
 - `deno task edit` - Edit all site content
 - `deno task deploy` - Deploy to Deno Deploy
 
