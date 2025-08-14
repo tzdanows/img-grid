@@ -6,6 +6,18 @@ import { getCloudinary, type CloudinaryImage, generateResponsiveImageSet, getIma
 // Load environment variables from .env file
 loadEnv();
 
+// Cache for Cloudinary images
+interface ImageCache {
+  [tag: string]: {
+    images: CloudinaryImage[];
+    lastFetched: number;
+    count: number;
+  };
+}
+
+const imageCache: ImageCache = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 // Content configuration interface
 interface SiteContent {
   site: {
@@ -89,14 +101,45 @@ async function loadContent(): Promise<SiteContent> {
   }
 }
 
-// Get images from Cloudinary by tag
-async function getCloudinaryImagesByTag(tag: string): Promise<CloudinaryImage[]> {
+// Get images from Cloudinary by tag with intelligent caching
+async function getCloudinaryImagesByTag(tag: string, limit: number = 400): Promise<CloudinaryImage[]> {
   try {
+    const now = Date.now();
+    const cached = imageCache[tag];
+    
+    // Check if we have valid cache
+    if (cached && (now - cached.lastFetched) < CACHE_DURATION) {
+      console.log(`📦 Using cached images for ${tag} (${cached.images.length} images)`);
+      return cached.images;
+    }
+    
+    // Fetch fresh data from Cloudinary
+    console.log(`🔄 Fetching fresh images for ${tag} tag (limit: ${limit})`);
     const cloudinary = getCloudinary();
-    const images = await cloudinary.getImagesByTag(tag, 12);
+    const images = await cloudinary.getImagesByTag(tag, limit);
+    
+    // Update cache
+    imageCache[tag] = {
+      images: images,
+      lastFetched: now,
+      count: images.length
+    };
+    
+    // Check if the image count has changed significantly (for smart cache invalidation)
+    if (cached && cached.count !== images.length) {
+      console.log(`📊 Image count changed for ${tag}: ${cached.count} → ${images.length}`);
+    }
+    
     return images;
   } catch (error) {
     console.error(`Error fetching ${tag} tagged images:`, error);
+    
+    // If there's an error and we have cache, return cached data
+    if (imageCache[tag]) {
+      console.log(`⚠️ Using stale cache for ${tag} due to error`);
+      return imageCache[tag].images;
+    }
+    
     return [];
   }
 }
@@ -209,25 +252,17 @@ async function generateGalleryPage(gallery: SiteContent['galleries'][0], content
 }
 
 async function generateInspoPage(content: SiteContent): Promise<string> {
-  const sections = content.inspiration.sections.map(section => {
-    const items = section.items.map(item => `
-      <li class="simple-content-item">
-        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="content-link">
-          ${item.title}
-        </a>
-        ${item.description ? `<span class="content-duration">${item.description}</span>` : ''}
-      </li>
-    `).join('');
-
-    return `
-      <div class="mb-8">
-        <h2 class="text-lg font-semibold text-gray-800 mb-3">${section.title}</h2>
-        <ul class="simple-content-list">
-          ${items}
-        </ul>
-      </div>
-    `;
-  }).join('');
+  // Flatten all items from all sections into a single list
+  const allItems = content.inspiration.sections.flatMap(section => section.items);
+  
+  const items = allItems.map(item => `
+    <li class="simple-content-item">
+      <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="content-link">
+        ${item.title}
+      </a>
+      ${item.description ? `<span class="content-duration">${item.description}</span>` : ''}
+    </li>
+  `).join('');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -248,7 +283,9 @@ async function generateInspoPage(content: SiteContent): Promise<string> {
                 ${content.inspiration.description}
             </p>
 
-            ${sections}
+            <ul class="simple-content-list">
+              ${items}
+            </ul>
         </main>
     </div>
 </body>
@@ -256,15 +293,52 @@ async function generateInspoPage(content: SiteContent): Promise<string> {
 }
 
 function generateHomePage(content: SiteContent): string {
-  const hobbies = content.site.owner.hobbies || [
-    "keyboards", "artisans", "esports", "programming", "community", "events", "cooking"
-  ];
+  // Parse bio which may contain multiple paragraphs separated by |
+  const bioParagraphs = content.site.owner.bio.split('|').map(p => p.trim()).filter(p => p.length > 0);
   
-  const hobbyList = hobbies.map(hobby => 
-    `<li class="simple-content-item">${hobby}</li>`
-  ).join('');
+  // Generate bio HTML with bold first word of first paragraph
+  const bioHtml = bioParagraphs.map((paragraph, index) => {
+    if (index === 0) {
+      // Bold the first word of the first paragraph
+      const words = paragraph.split(' ');
+      const firstWord = words[0];
+      const restOfParagraph = words.slice(1).join(' ');
+      return `<p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    <b>${firstWord}</b> ${restOfParagraph}
+                </p>`;
+    } else {
+      return `<p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    ${paragraph}
+                </p>`;
+    }
+  }).join('');
+  
+  // Only show hobbies section if hobbies exist
+  const hobbies = content.site.owner.hobbies;
+  let hobbySection = '';
+  
+  if (hobbies && hobbies.length > 0) {
+    const hobbyList = hobbies.map(hobby => 
+      `<li class="simple-content-item">${hobby}</li>`
+    ).join('');
+    
+    hobbySection = `
+                <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    an enthusiast of the following:
+                </p>
+                
+                <ul class="simple-content-list mb-12">
+                    ${hobbyList}
+                </ul>`;
+  }
 
-  const quote = content.site.owner.quote || "live life at your own tempo; memento mori";
+  // Only show quote if it exists
+  const quote = content.site.owner.quote;
+  const quoteSection = quote ? `
+                <br><br>
+                <p class="text-base text-gray-600 italic">
+                    "${quote}"
+                </p>` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -280,24 +354,9 @@ function generateHomePage(content: SiteContent): string {
         
         <main class="max-w-2xl mx-auto px-4 py-8">
             <div class="mb-8">
-                <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                    <b>hi!</b> I'm ${content.site.owner.name} and I made this site to provide a platform to share media associated 
-                    with my interests. I hope you'll enjoy your stay
-                </p>
-                
-                <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                    ${content.site.owner.bio.toLowerCase()} 
-                    <br><br> an enthusiast of the following:
-                </p>
-                
-                <ul class="simple-content-list mb-12">
-                    ${hobbyList}
-                </ul>
-                
-                <br><br>
-                <p class="text-base text-gray-600 italic">
-                    "${quote}"
-                </p>
+                ${bioHtml}
+                ${hobbySection}
+                ${quoteSection}
             </div>
         </main>
     </div>
@@ -308,6 +367,32 @@ function generateHomePage(content: SiteContent): string {
 async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const { pathname } = url;
+  
+  // Cache control endpoints
+  if (pathname === "/api/cache/clear") {
+    // Clear all cache
+    for (const key in imageCache) {
+      delete imageCache[key];
+    }
+    console.log("🗑️ Image cache cleared");
+    return new Response(JSON.stringify({ message: "Cache cleared successfully" }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  
+  if (pathname === "/api/cache/status") {
+    // Get cache status
+    const status = Object.entries(imageCache).map(([tag, data]) => ({
+      tag,
+      imageCount: data.count,
+      lastFetched: new Date(data.lastFetched).toISOString(),
+      ageInSeconds: Math.floor((Date.now() - data.lastFetched) / 1000)
+    }));
+    
+    return new Response(JSON.stringify({ cacheEntries: status, cacheDurationSeconds: CACHE_DURATION / 1000 }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   
   // Load content for each request to allow hot reloading
   const content = await loadContent();
