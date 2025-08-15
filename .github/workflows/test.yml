@@ -28,10 +28,3 @@ jobs:
 
       - name: Run Tests
         run: deno test --allow-read --allow-env --quiet
-
-      - name: Test Coverage
-        run: deno test --allow-read --allow-env --coverage=coverage --quiet
-
-      - name: Generate Coverage Report
-        run: deno coverage coverage --lcov > coverage.lcov
-        if: success()
