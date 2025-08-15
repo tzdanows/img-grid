@@ -10,6 +10,11 @@
     "check": "deno check **/*.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
+    "test": "deno test --allow-read --allow-env",
+    "test:watch": "deno test --allow-read --allow-env --watch",
+    "test:coverage": "deno test --allow-read --allow-env --coverage=coverage",
+    "test:quick": "deno test --allow-read --allow-env --parallel --quiet",
+    "ci": "deno fmt --check && deno lint && deno test --allow-read --allow-env --quiet",
     "setup": "deno run -A scripts/setup.ts",
     "edit": "deno run -A scripts/edit-content.ts",
     "add-links": "deno run -A scripts/add-links.ts",
@@ -22,5 +27,9 @@
     ],
     "include": [],
     "entrypoint": "cloudinary-server.ts"
+  },
+  "test": {
+    "include": ["tests/"],
+    "exclude": ["static/", "node_modules/"]
   }
 }
