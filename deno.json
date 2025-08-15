@@ -14,16 +14,7 @@
     "ci": "deno fmt --check && deno lint && deno test --allow-read --allow-env --quiet",
     "setup": "deno run -A scripts/setup.ts",
     "edit": "deno run -A scripts/edit-content.ts",
-    "add-links": "deno run -A scripts/add-links.ts",
-    "deploy": "deployctl deploy cloudinary-server.ts"
-  },
-  "deploy": {
-    "project": "9171486c-7673-4b77-a643-c6fe70529cf1",
-    "exclude": [
-      "**/node_modules"
-    ],
-    "include": [],
-    "entrypoint": "cloudinary-server.ts"
+    "add-links": "deno run -A scripts/add-links.ts"
   },
   "test": {
     "include": ["tests/"],
