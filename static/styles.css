@@ -3,6 +3,60 @@
 @import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/components.css");
 @import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/utilities.css");
 
+/* Nord Theme Colors */
+:root {
+  /* Nord Polar Night (dark backgrounds) */
+  --nord0: #2e3440;
+  --nord1: #3b4252;
+  --nord2: #434c5e;
+  --nord3: #4c566a;
+  
+  /* Nord Snow Storm (light elements) */
+  --nord4: #d8dee9;
+  --nord5: #e5e9f0;
+  --nord6: #eceff4;
+  
+  /* Nord Frost (accent colors) */
+  --nord7: #8fbcbb;  /* Teal */
+  --nord8: #88c0d0;  /* Light blue */
+  --nord9: #81a1c1;  /* Blue */
+  --nord10: #5e81ac; /* Dark blue */
+  
+  /* Nord Aurora (highlights) */
+  --nord11: #bf616a; /* Red */
+  --nord12: #d08770; /* Orange */
+  --nord13: #ebcb8b; /* Yellow */
+  --nord14: #a3be8c; /* Green */
+  --nord15: #b48ead; /* Purple */
+  
+  /* Light mode (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --accent: #008080;
+  --link-color: #0066cc;
+}
+
+/* Dark mode with Nord theme */
+[data-theme="dark"] {
+  --bg-primary: var(--nord0);
+  --bg-secondary: var(--nord1);
+  --text-primary: var(--nord6);
+  --text-secondary: var(--nord4);
+  --border-color: var(--nord3);
+  --accent: var(--nord8);
+  --link-color: var(--nord9);
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* Base styles with Preflight reset */
 *,
 ::before,
@@ -34,6 +88,8 @@ html {
 body {
   margin: 0;
   line-height: inherit;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Custom utility classes for mobile-first design */
@@ -179,13 +235,7 @@ body {
 }
 
 /* Interactive elements */
-.hover\:text-blue-600:hover {
-  color: #008080;
-}
-
-.hover\:text-gray-900:hover {
-  color: #008080;
-}
+/* Hover colors now handled by nav-specific classes */
 
 .hover\:scale-105:hover {
   transform: scale(1.05);
@@ -846,4 +896,171 @@ body.popup-open {
     width: 100px;
     height: 70px;
   }
+}
+
+
+/* Dark mode toggle button */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+}
+
+.theme-toggle svg {
+  width: 24px;
+  height: 24px;
+  stroke: #111827; /* Dark icon in light mode */
+  fill: none;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background-color: var(--nord2);
+  border-color: var(--nord3);
+}
+
+[data-theme="dark"] .theme-toggle svg {
+  stroke: #ffffff; /* White icon in dark mode */
+}
+
+/* Navigation styling */
+.nav-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.home-icon-link {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.home-icon-link:hover {
+  color: var(--link-color);
+  transform: scale(1.1);
+}
+
+.nav-link {
+  color: var(--text-secondary);
+}
+
+.nav-link:hover {
+  color: var(--accent);
+}
+
+/* Dark mode specific nav colors */
+[data-theme="dark"] .home-icon-link {
+  color: var(--nord8); /* Light blue in dark mode */
+}
+
+[data-theme="dark"] .home-icon-link:hover {
+  color: var(--nord7); /* Teal on hover */
+}
+
+[data-theme="dark"] .nav-link {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .nav-link:hover {
+  color: var(--nord8);
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .gallery-info-item {
+  background: var(--nord1);
+  border-color: var(--nord3);
+}
+
+[data-theme="dark"] .gallery-info-title {
+  color: var(--nord6);
+}
+
+[data-theme="dark"] .gallery-info-description {
+  color: var(--nord4);
+}
+
+[data-theme="dark"] .photo-item {
+  background-color: var(--nord2);
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .image-popup {
+  background-color: rgba(46, 52, 64, 0.95);
+}
+
+[data-theme="dark"] .popup-content {
+  background-color: var(--nord0);
+}
+
+[data-theme="dark"] .popup-close,
+[data-theme="dark"] .popup-download,
+[data-theme="dark"] .popup-new-tab {
+  background-color: var(--nord1);
+  color: var(--nord6);
+}
+
+[data-theme="dark"] .popup-close:hover,
+[data-theme="dark"] .popup-download:hover,
+[data-theme="dark"] .popup-new-tab:hover {
+  background-color: var(--nord2);
+}
+
+[data-theme="dark"] .carousel-container {
+  background-color: var(--nord1);
+  border-color: var(--nord3);
+}
+
+/* Dark mode for homepage and content pages */
+[data-theme="dark"] .homepage-title {
+  color: var(--nord6);
+}
+
+[data-theme="dark"] .content-description {
+  color: var(--nord4);
+}
+
+[data-theme="dark"] .content-link {
+  color: var(--nord6);
+}
+
+[data-theme="dark"] .content-link:hover {
+  color: var(--nord8);
+}
+
+[data-theme="dark"] .content-duration {
+  color: var(--nord4);
+}
+
+[data-theme="dark"] .simple-content-item::before {
+  color: var(--nord4);
+}
+
+[data-theme="dark"] .text-gray-700 {
+  color: var(--nord5) !important;
+}
+
+[data-theme="dark"] .text-gray-600 {
+  color: var(--nord4) !important;
+}
+
+[data-theme="dark"] .italic {
+  color: var(--nord4);
 }

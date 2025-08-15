@@ -318,12 +318,68 @@ function getCloudinaryImagesByTag(
   }
 }
 
+function getDarkModeToggle(): string {
+  return `
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+    </button>
+  `;
+}
+
+function getDarkModeScript(): string {
+  return `
+    // Dark mode functionality
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+    }
+    
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    }
+    
+    function updateThemeIcon(theme) {
+        const toggle = document.querySelector('.theme-toggle');
+        if (!toggle) return;
+        
+        if (theme === 'dark') {
+            toggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+        } else {
+            toggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+        }
+    }
+    
+    // Initialize theme on page load
+    initTheme();
+  `;
+}
+
 function generateNavigation(content: SiteContent): string {
   const navItems = content.navigation.map((item) => {
     if (item.path === "/") {
       return `
-        <a href="/" class="text-lg font-medium hover:text-blue-600 transition-colors">
-          home
+        <a href="/" class="home-icon-link transition-colors" aria-label="Home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
         </a>
       `;
     }
@@ -332,14 +388,14 @@ function generateNavigation(content: SiteContent): string {
 
   const links = content.navigation.filter((item) => item.path !== "/").map(
     (item) => `
-    <a href="${item.path}" class="text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base">
+    <a href="${item.path}" class="nav-link transition-colors text-sm sm:text-base">
       ${item.title.toLowerCase()}
     </a>
   `,
   ).join("");
 
   return `
-    <nav class="border-b border-gray-200">
+    <nav class="nav-header">
       <div class="max-w-full mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           ${navItems}
@@ -439,13 +495,15 @@ async function generateGalleryPage(
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <div class="min-h-screen bg-white">
+    <div class="min-h-screen">
         ${generateNavigation(content)}
         
         <main class="gallery-container">
             ${galleryItems}
         </main>
     </div>
+    
+    ${getDarkModeToggle()}
     
     <!-- Image Popup with Carousel -->
     <div id="imagePopup" class="image-popup">
@@ -502,6 +560,8 @@ async function generateGalleryPage(
     </div>
     
     <script>
+        ${getDarkModeScript()}
+        
         let popupOpen = false;
         let currentImageIndex = 0;
         let galleryImages = [];
@@ -762,7 +822,7 @@ function generateInspoPage(content: SiteContent): string {
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <div class="min-h-screen bg-white">
+    <div class="min-h-screen">
         ${generateNavigation(content)}
         
         <main class="max-w-2xl mx-auto px-4 py-8">
@@ -777,6 +837,12 @@ function generateInspoPage(content: SiteContent): string {
             </ul>
         </main>
     </div>
+    
+    ${getDarkModeToggle()}
+    
+    <script>
+        ${getDarkModeScript()}
+    </script>
 </body>
 </html>`;
 }
@@ -841,7 +907,7 @@ function generateHomePage(content: SiteContent): string {
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <div class="min-h-screen bg-white">
+    <div class="min-h-screen">
         ${generateNavigation(content)}
         
         <main class="max-w-2xl mx-auto px-4 py-8">
@@ -852,6 +918,12 @@ function generateHomePage(content: SiteContent): string {
             </div>
         </main>
     </div>
+    
+    ${getDarkModeToggle()}
+    
+    <script>
+        ${getDarkModeScript()}
+    </script>
 </body>
 </html>`;
 }

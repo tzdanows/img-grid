@@ -1,6 +1,6 @@
-# Media Showcase for hobbyists
+# media showcase for hobbyists
 
-A personal gallery for hobby photos & curated content:
+a personal gallery for hobby photos & curated content:
 
 ```bash
 Home
