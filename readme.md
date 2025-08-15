@@ -85,3 +85,12 @@ deno task deploy
 3. **Photo Management**: Upload to Cloudinary with matching tags
    - Images automatically appear in galleries
    - Responsive optimization built-in
+   
+4. **Cache Management**: Cache images and videos locally for faster loading (zero-maintenance due to automatic clearing)
+   - Images and videos are cached in `/cache`
+   - Cache is automatically cleared when content is edited
+   - `/api/cache/status endpoint` shows:
+     - Current memory usage vs limits
+     - Which entries are expired
+     - Active requests in progress
+     - Cache hit rates (indirectly via age)

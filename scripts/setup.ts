@@ -225,13 +225,20 @@ async function setupCloudinary() {
     message: "API Secret:",
     validate: (value) => value.length > 0 || "API Secret is required",
   });
+  
+  // Generate a secure random API key for cache management
+  const cacheApiKey = crypto.randomUUID();
+  console.log("\n🔐 Generated Cache API Key (save this!):");
+  console.log(`   ${cacheApiKey}`);
+  console.log("   Use this key with 'Authorization: Bearer <key>' header for /api/cache/* endpoints");
 
   const envContent = `CLOUDINARY_CLOUD_NAME=${cloudName}
 CLOUDINARY_API_KEY=${apiKey}
-CLOUDINARY_API_SECRET=${apiSecret}`;
+CLOUDINARY_API_SECRET=${apiSecret}
+CACHE_API_KEY=${cacheApiKey}`;
 
   await Deno.writeTextFile("./.env", envContent);
-  console.log("✅ Cloudinary configuration saved to .env");
+  console.log("\n✅ Configuration saved to .env");
 }
 
 if (import.meta.main) {

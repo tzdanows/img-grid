@@ -6,17 +6,119 @@ import { getCloudinary, type CloudinaryImage, generateResponsiveImageSet, getIma
 // Load environment variables from .env file
 loadEnv();
 
-// Cache for Cloudinary images
+// Cache for Cloudinary images with promise support for request coalescing
+interface ImageCacheEntry {
+  images: CloudinaryImage[];
+  promise?: Promise<CloudinaryImage[]>;
+  lastFetched: number;
+  lastAccessed: number;
+  count: number;
+  sizeBytes: number;
+}
+
 interface ImageCache {
-  [tag: string]: {
-    images: CloudinaryImage[];
-    lastFetched: number;
-    count: number;
-  };
+  [tag: string]: ImageCacheEntry;
 }
 
 const imageCache: ImageCache = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const MAX_CACHE_SIZE = 50 * 1024 * 1024; // 50MB max cache size
+const MAX_CACHE_ENTRIES = 20; // Maximum number of gallery caches
+
+// Track current cache size
+let currentCacheSize = 0;
+
+// Calculate approximate size of image metadata
+function calculateImageDataSize(images: CloudinaryImage[]): number {
+  // Rough estimate: ~1KB per image metadata object
+  return images.length * 1024;
+}
+
+// Evict least recently used entries when cache is full
+function evictLRUEntries(): void {
+  const entries = Object.entries(imageCache);
+  
+  // Check if eviction is needed
+  if (entries.length <= MAX_CACHE_ENTRIES && currentCacheSize <= MAX_CACHE_SIZE) {
+    return;
+  }
+  
+  // Sort by last accessed time (oldest first)
+  entries.sort((a, b) => a[1].lastAccessed - b[1].lastAccessed);
+  
+  // Evict entries until we're under limits
+  while ((entries.length > MAX_CACHE_ENTRIES || currentCacheSize > MAX_CACHE_SIZE) && entries.length > 0) {
+    const [tag, entry] = entries.shift()!;
+    
+    // Don't evict entries with active promises
+    if (entry.promise) {
+      continue;
+    }
+    
+    console.log(`🗑️ Evicting cache for ${tag} (size: ${entry.sizeBytes} bytes, age: ${Math.round((Date.now() - entry.lastAccessed) / 1000)}s)`);
+    currentCacheSize -= entry.sizeBytes;
+    delete imageCache[tag];
+  }
+}
+
+// Clean up expired cache entries
+function cleanupExpiredEntries(): number {
+  const now = Date.now();
+  let cleaned = 0;
+  
+  for (const [tag, entry] of Object.entries(imageCache)) {
+    // Skip entries with active promises
+    if (entry.promise) {
+      continue;
+    }
+    
+    // Remove expired entries
+    if (now - entry.lastFetched > CACHE_DURATION) {
+      console.log(`🧹 Removing expired cache for ${tag} (age: ${Math.round((now - entry.lastFetched) / 1000)}s)`);
+      currentCacheSize -= entry.sizeBytes;
+      delete imageCache[tag];
+      cleaned++;
+    }
+  }
+  
+  return cleaned;
+}
+
+// Periodic cleanup interval (runs every minute)
+let cleanupInterval: number | undefined;
+
+function startPeriodicCleanup(): void {
+  if (cleanupInterval) {
+    return; // Already running
+  }
+  
+  cleanupInterval = setInterval(() => {
+    const cleaned = cleanupExpiredEntries();
+    if (cleaned > 0) {
+      console.log(`🧹 Periodic cleanup removed ${cleaned} expired entries`);
+    }
+  }, 60 * 1000); // Run every minute
+}
+
+// Security: Validate cache management API access
+function validateCacheApiAccess(req: Request): boolean {
+  const cacheApiKey = Deno.env.get('CACHE_API_KEY');
+  
+  // If no key is configured, deny access (secure by default)
+  if (!cacheApiKey) {
+    console.warn('⚠️ Cache API access denied: CACHE_API_KEY not configured');
+    return false;
+  }
+  
+  // Check Authorization header
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+  
+  const providedKey = authHeader.slice(7); // Remove 'Bearer ' prefix
+  return providedKey === cacheApiKey;
+}
 
 // Content configuration interface
 interface SiteContent {
@@ -101,45 +203,90 @@ async function loadContent(): Promise<SiteContent> {
   }
 }
 
-// Get images from Cloudinary by tag with intelligent caching
+// Get images from Cloudinary by tag with intelligent caching and request coalescing
 async function getCloudinaryImagesByTag(tag: string, limit: number = 400): Promise<CloudinaryImage[]> {
   try {
     const now = Date.now();
     const cached = imageCache[tag];
     
     // Check if we have valid cache
-    if (cached && (now - cached.lastFetched) < CACHE_DURATION) {
+    if (cached && cached.images && (now - cached.lastFetched) < CACHE_DURATION) {
       console.log(`📦 Using cached images for ${tag} (${cached.images.length} images)`);
+      cached.lastAccessed = now; // Update access time for LRU
       return cached.images;
     }
     
-    // Fetch fresh data from Cloudinary
-    console.log(`🔄 Fetching fresh images for ${tag} tag (limit: ${limit})`);
-    const cloudinary = getCloudinary();
-    const images = await cloudinary.getImagesByTag(tag, limit);
+    // If a fetch is already in progress, return the existing promise
+    if (cached?.promise) {
+      console.log(`⏳ Waiting for in-progress fetch for ${tag}`);
+      return cached.promise;
+    }
     
-    // Update cache
+    // Create new fetch promise
+    console.log(`🔄 Fetching fresh images for ${tag} tag (limit: ${limit})`);
+    const fetchPromise = (async () => {
+      const cloudinary = getCloudinary();
+      const images = await cloudinary.getImagesByTag(tag, limit);
+      
+      const dataSize = calculateImageDataSize(images);
+      const now = Date.now();
+      
+      // Update cache size tracking
+      if (cached?.sizeBytes) {
+        currentCacheSize -= cached.sizeBytes;
+      }
+      currentCacheSize += dataSize;
+      
+      // Evict old entries if needed before adding new one
+      evictLRUEntries();
+      
+      // Update cache with fetched data
+      imageCache[tag] = {
+        images: images,
+        lastFetched: now,
+        lastAccessed: now,
+        count: images.length,
+        sizeBytes: dataSize,
+        promise: undefined // Clear promise after completion
+      };
+      
+      // Check if the image count has changed
+      if (cached && cached.count !== images.length) {
+        console.log(`📊 Image count changed for ${tag}: ${cached.count} → ${images.length}`);
+      }
+      
+      return images;
+    })();
+    
+    // Store promise immediately to prevent duplicate requests
     imageCache[tag] = {
-      images: images,
-      lastFetched: now,
-      count: images.length
+      images: cached?.images || [],
+      promise: fetchPromise,
+      lastFetched: cached?.lastFetched || 0,
+      lastAccessed: now,
+      count: cached?.count || 0,
+      sizeBytes: cached?.sizeBytes || 0
     };
     
-    // Check if the image count has changed significantly (for smart cache invalidation)
-    if (cached && cached.count !== images.length) {
-      console.log(`📊 Image count changed for ${tag}: ${cached.count} → ${images.length}`);
-    }
-    
-    return images;
+    // Handle errors and cleanup
+    return fetchPromise.catch((error) => {
+      console.error(`Error fetching ${tag} tagged images:`, error);
+      
+      // Clear failed promise from cache
+      if (imageCache[tag]?.promise === fetchPromise) {
+        imageCache[tag].promise = undefined;
+      }
+      
+      // If there's an error and we have cached data, return it
+      if (cached?.images && cached.images.length > 0) {
+        console.log(`⚠️ Using stale cache for ${tag} due to error`);
+        return cached.images;
+      }
+      
+      return [];
+    });
   } catch (error) {
-    console.error(`Error fetching ${tag} tagged images:`, error);
-    
-    // If there's an error and we have cache, return cached data
-    if (imageCache[tag]) {
-      console.log(`⚠️ Using stale cache for ${tag} due to error`);
-      return imageCache[tag].images;
-    }
-    
+    console.error(`Unexpected error in cache handler for ${tag}:`, error);
     return [];
   }
 }
@@ -368,30 +515,67 @@ async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const { pathname } = url;
   
-  // Cache control endpoints
-  if (pathname === "/api/cache/clear") {
-    // Clear all cache
-    for (const key in imageCache) {
-      delete imageCache[key];
+  // Cache control endpoints (protected)
+  if (pathname.startsWith("/api/cache/")) {
+    // Validate API access
+    if (!validateCacheApiAccess(req)) {
+      return new Response(JSON.stringify({ error: "Unauthorized. Please provide a valid API key in the Authorization header." }), {
+        status: 401,
+        headers: { 
+          "Content-Type": "application/json",
+          "WWW-Authenticate": "Bearer realm=\"Cache API\""
+        },
+      });
     }
-    console.log("🗑️ Image cache cleared");
-    return new Response(JSON.stringify({ message: "Cache cleared successfully" }), {
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-  
-  if (pathname === "/api/cache/status") {
-    // Get cache status
-    const status = Object.entries(imageCache).map(([tag, data]) => ({
-      tag,
-      imageCount: data.count,
-      lastFetched: new Date(data.lastFetched).toISOString(),
-      ageInSeconds: Math.floor((Date.now() - data.lastFetched) / 1000)
-    }));
     
-    return new Response(JSON.stringify({ cacheEntries: status, cacheDurationSeconds: CACHE_DURATION / 1000 }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    if (pathname === "/api/cache/clear") {
+      // Clear all cache
+      let clearedEntries = 0;
+      let clearedSize = 0;
+      
+      for (const key in imageCache) {
+        clearedSize += imageCache[key].sizeBytes;
+        delete imageCache[key];
+        clearedEntries++;
+      }
+      
+      currentCacheSize = 0; // Reset cache size counter
+      console.log(`🗑️ Image cache cleared: ${clearedEntries} entries, ${Math.round(clearedSize / 1024)}KB`);
+      
+      return new Response(JSON.stringify({ 
+        message: "Cache cleared successfully",
+        entriesCleared: clearedEntries,
+        sizeCleared: Math.round(clearedSize / 1024)
+      }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    if (pathname === "/api/cache/status") {
+      // Get cache status
+      const now = Date.now();
+      const status = Object.entries(imageCache).map(([tag, data]) => ({
+        tag,
+        imageCount: data.count,
+        sizeKB: Math.round(data.sizeBytes / 1024),
+        lastFetched: new Date(data.lastFetched).toISOString(),
+        lastAccessed: new Date(data.lastAccessed).toISOString(),
+        ageSeconds: Math.floor((now - data.lastFetched) / 1000),
+        expired: now - data.lastFetched > CACHE_DURATION,
+        hasActiveRequest: !!data.promise
+      }));
+      
+      return new Response(JSON.stringify({ 
+        cacheEntries: status,
+        totalEntries: Object.keys(imageCache).length,
+        totalSizeMB: Math.round(currentCacheSize / 1024 / 1024 * 100) / 100,
+        maxSizeMB: MAX_CACHE_SIZE / 1024 / 1024,
+        maxEntries: MAX_CACHE_ENTRIES,
+        cacheDurationSeconds: CACHE_DURATION / 1000
+      }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
   
   // Load content for each request to allow hot reloading
@@ -447,6 +631,9 @@ async function handler(req: Request): Promise<Response> {
 if (import.meta.main) {
   const content = await loadContent();
   
+  // Start periodic cache cleanup
+  startPeriodicCleanup();
+  
   console.log(`🚀 ${content.site.title} starting on http://localhost:8737`);
   console.log("📱 Full-span gallery pages with tag-based image loading:");
   console.log("   http://localhost:8737/ (Home)");
@@ -476,6 +663,14 @@ if (import.meta.main) {
   console.log("\n📝 Content Configuration:");
   console.log("   Edit content.json to customize your site");
   console.log("   Run 'deno task edit' for interactive content editor");
+  
+  console.log("\n🔐 Cache API Security:");
+  const hasCacheKey = !!Deno.env.get('CACHE_API_KEY');
+  console.log(`   Cache API Key: ${hasCacheKey ? '✅ Configured' : '❌ Not set (endpoints disabled)'}`);
+  if (hasCacheKey) {
+    console.log("   Endpoints: /api/cache/status, /api/cache/clear");
+    console.log("   Usage: Include 'Authorization: Bearer <key>' header");
+  }
   
   console.log("\n🌐 Server Status:");
   console.log("   Listening on http://localhost:8737/\n");
