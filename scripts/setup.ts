@@ -1,6 +1,9 @@
 #!/usr/bin/env -S deno run -A
 
-import { Input, Confirm, Number, Select } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
+import {
+  Confirm,
+  Input,
+} from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
 
 interface SiteContent {
   site: {
@@ -63,17 +66,21 @@ async function setupSite() {
     message: "Your name:",
     default: "untitled",
   });
-  
+
   // Main bio/description - can be multiple paragraphs
-  console.log("\n📝 Main Description (you can use \\n for multiple paragraphs)");
+  console.log(
+    "\n📝 Main Description (you can use \\n for multiple paragraphs)",
+  );
   const rawDescription = await Input.prompt({
     message: "Main site description:",
-    default: "I made this site to provide a platform to share media associated with my interests. I hope you'll enjoy your stay",
+    default:
+      "I made this site to provide a platform to share media associated with my interests. I hope you'll enjoy your stay",
   });
-  
+
   // Process description to handle multiple paragraphs
-  const descriptionParagraphs = rawDescription.split('\\n').map(p => p.trim()).filter(p => p.length > 0);
-  
+  const descriptionParagraphs = rawDescription.split("\\n").map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
   // Quote (optional)
   const ownerQuote = await Input.prompt({
     message: "Favorite quote (optional, press Enter to skip):",
@@ -82,18 +89,22 @@ async function setupSite() {
 
   // Gallery routes
   console.log("\n📸 Gallery Setup");
-  console.log("Routes must match your Cloudinary tags exactly (e.g., 'portrait', 'landscape')\n");
-  
+  console.log(
+    "Routes must match your Cloudinary tags exactly (e.g., 'portrait', 'landscape')\n",
+  );
+
   const routeInput = await Input.prompt({
     message: "Enter gallery routes (comma-separated):",
     default: "portrait, landscape, street",
   });
 
-  const routes = routeInput.split(',').map(r => r.trim()).filter(r => r.length > 0);
-  
-  const galleries: SiteContent['galleries'] = [];
-  const navigation: SiteContent['navigation'] = [
-    { id: "home", title: "Home", path: "/" }
+  const routes = routeInput.split(",").map((r) => r.trim()).filter((r) =>
+    r.length > 0
+  );
+
+  const galleries: SiteContent["galleries"] = [];
+  const navigation: SiteContent["navigation"] = [
+    { id: "home", title: "Home", path: "/" },
   ];
 
   // Create galleries from routes
@@ -103,13 +114,13 @@ async function setupSite() {
       title: route.toLowerCase(),
       description: `${route} photography`,
       cloudinaryTag: route.toLowerCase(),
-      layout: "grid"
+      layout: "grid",
     });
 
     navigation.push({
       id: route.toLowerCase(),
       title: route.toLowerCase(),
-      path: `/${route.toLowerCase()}`
+      path: `/${route.toLowerCase()}`,
     });
   }
 
@@ -123,7 +134,7 @@ async function setupSite() {
     navigation.push({
       id: "inspo",
       title: "Inspo",
-      path: "/inspo"
+      path: "/inspo",
     });
   }
 
@@ -133,8 +144,10 @@ async function setupSite() {
     message: "Your hobbies (comma-separated, or press Enter to skip):",
     default: "",
   });
-  
-  const hobbies = hobbyInput ? hobbyInput.split(',').map(h => h.trim()).filter(h => h.length > 0) : [];
+
+  const hobbies = hobbyInput
+    ? hobbyInput.split(",").map((h) => h.trim()).filter((h) => h.length > 0)
+    : [];
 
   // Create content
   const content: SiteContent = {
@@ -143,29 +156,31 @@ async function setupSite() {
       description: "Personal gallery for photos & curated content",
       owner: {
         name: ownerName,
-        bio: descriptionParagraphs.join('|'),  // Using | as paragraph separator
+        bio: descriptionParagraphs.join("|"), // Using | as paragraph separator
         quote: ownerQuote.length > 0 ? ownerQuote : undefined,
-        hobbies: hobbies.length > 0 ? hobbies : undefined
-      }
+        hobbies: hobbies.length > 0 ? hobbies : undefined,
+      },
     },
     navigation: navigation,
     galleries: galleries,
     inspiration: {
       title: "Inspiration",
       description: "Content that inspires",
-      sections: hasInspo ? [
-        {
-          title: "Videos",
-          items: []
-        }
-      ] : []
+      sections: hasInspo
+        ? [
+          {
+            title: "Videos",
+            items: [],
+          },
+        ]
+        : [],
     },
     theme: {
       primaryColor: "#2563eb",
       backgroundColor: "#000000",
       textColor: "#ffffff",
-      accentColor: "#3b82f6"
-    }
+      accentColor: "#3b82f6",
+    },
   };
 
   // Save configuration
@@ -175,13 +190,14 @@ async function setupSite() {
   // Cloudinary setup
   console.log("\n☁️  Cloudinary Configuration");
   const envExists = await Deno.stat(".env").catch(() => null);
-  
+
   if (envExists) {
     const overwriteCloudinary = await Confirm.prompt({
-      message: "Cloudinary configuration already exists. Do you want to update it?",
+      message:
+        "Cloudinary configuration already exists. Do you want to update it?",
       default: false,
     });
-    
+
     if (overwriteCloudinary) {
       await setupCloudinary();
     } else {
@@ -192,7 +208,7 @@ async function setupSite() {
       message: "Would you like to set up Cloudinary now?",
       default: true,
     });
-    
+
     if (setupCloud) {
       await setupCloudinary();
     } else {
@@ -203,34 +219,36 @@ async function setupSite() {
   // Instructions
   console.log("\n🎉 Setup complete!");
   console.log("\n📋 Next steps:");
-  console.log(`1. Upload images to Cloudinary with tags: ${routes.join(', ')}`);
+  console.log(`1. Upload images to Cloudinary with tags: ${routes.join(", ")}`);
   console.log("2. Run: deno task dev");
   console.log("3. Visit: http://localhost:8737");
 }
 
 async function setupCloudinary() {
   console.log("\n📋 Get your credentials from https://cloudinary.com/console");
-  
+
   const cloudName = await Input.prompt({
     message: "Cloud Name:",
     validate: (value) => value.length > 0 || "Cloud Name is required",
   });
-  
+
   const apiKey = await Input.prompt({
     message: "API Key:",
     validate: (value) => value.length > 0 || "API Key is required",
   });
-  
+
   const apiSecret = await Input.prompt({
     message: "API Secret:",
     validate: (value) => value.length > 0 || "API Secret is required",
   });
-  
+
   // Generate a secure random API key for cache management
   const cacheApiKey = crypto.randomUUID();
   console.log("\n🔐 Generated Cache API Key (save this!):");
   console.log(`   ${cacheApiKey}`);
-  console.log("   Use this key with 'Authorization: Bearer <key>' header for /api/cache/* endpoints");
+  console.log(
+    "   Use this key with 'Authorization: Bearer <key>' header for /api/cache/* endpoints",
+  );
 
   const envContent = `CLOUDINARY_CLOUD_NAME=${cloudName}
 CLOUDINARY_API_KEY=${apiKey}

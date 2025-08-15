@@ -1,7 +1,12 @@
 #!/usr/bin/env -S deno run -A
 
 import { loadEnv } from "./lib/env.ts";
-import { getCloudinary, type CloudinaryImage, generateResponsiveImageSet, getImageSizes } from "./lib/cloudinary.ts";
+import {
+  type CloudinaryImage,
+  generateResponsiveImageSet,
+  getCloudinary,
+  getImageSizes,
+} from "./lib/cloudinary.ts";
 
 // Load environment variables from .env file
 loadEnv();
@@ -37,25 +42,34 @@ function calculateImageDataSize(images: CloudinaryImage[]): number {
 // Evict least recently used entries when cache is full
 function evictLRUEntries(): void {
   const entries = Object.entries(imageCache);
-  
+
   // Check if eviction is needed
-  if (entries.length <= MAX_CACHE_ENTRIES && currentCacheSize <= MAX_CACHE_SIZE) {
+  if (
+    entries.length <= MAX_CACHE_ENTRIES && currentCacheSize <= MAX_CACHE_SIZE
+  ) {
     return;
   }
-  
+
   // Sort by last accessed time (oldest first)
   entries.sort((a, b) => a[1].lastAccessed - b[1].lastAccessed);
-  
+
   // Evict entries until we're under limits
-  while ((entries.length > MAX_CACHE_ENTRIES || currentCacheSize > MAX_CACHE_SIZE) && entries.length > 0) {
+  while (
+    (entries.length > MAX_CACHE_ENTRIES || currentCacheSize > MAX_CACHE_SIZE) &&
+    entries.length > 0
+  ) {
     const [tag, entry] = entries.shift()!;
-    
+
     // Don't evict entries with active promises
     if (entry.promise) {
       continue;
     }
-    
-    console.log(`🗑️ Evicting cache for ${tag} (size: ${entry.sizeBytes} bytes, age: ${Math.round((Date.now() - entry.lastAccessed) / 1000)}s)`);
+
+    console.log(
+      `🗑️ Evicting cache for ${tag} (size: ${entry.sizeBytes} bytes, age: ${
+        Math.round((Date.now() - entry.lastAccessed) / 1000)
+      }s)`,
+    );
     currentCacheSize -= entry.sizeBytes;
     delete imageCache[tag];
   }
@@ -65,22 +79,26 @@ function evictLRUEntries(): void {
 function cleanupExpiredEntries(): number {
   const now = Date.now();
   let cleaned = 0;
-  
+
   for (const [tag, entry] of Object.entries(imageCache)) {
     // Skip entries with active promises
     if (entry.promise) {
       continue;
     }
-    
+
     // Remove expired entries
     if (now - entry.lastFetched > CACHE_DURATION) {
-      console.log(`🧹 Removing expired cache for ${tag} (age: ${Math.round((now - entry.lastFetched) / 1000)}s)`);
+      console.log(
+        `🧹 Removing expired cache for ${tag} (age: ${
+          Math.round((now - entry.lastFetched) / 1000)
+        }s)`,
+      );
       currentCacheSize -= entry.sizeBytes;
       delete imageCache[tag];
       cleaned++;
     }
   }
-  
+
   return cleaned;
 }
 
@@ -91,7 +109,7 @@ function startPeriodicCleanup(): void {
   if (cleanupInterval) {
     return; // Already running
   }
-  
+
   cleanupInterval = setInterval(() => {
     const cleaned = cleanupExpiredEntries();
     if (cleaned > 0) {
@@ -102,20 +120,20 @@ function startPeriodicCleanup(): void {
 
 // Security: Validate cache management API access
 function validateCacheApiAccess(req: Request): boolean {
-  const cacheApiKey = Deno.env.get('CACHE_API_KEY');
-  
+  const cacheApiKey = Deno.env.get("CACHE_API_KEY");
+
   // If no key is configured, deny access (secure by default)
   if (!cacheApiKey) {
-    console.warn('⚠️ Cache API access denied: CACHE_API_KEY not configured');
+    console.warn("⚠️ Cache API access denied: CACHE_API_KEY not configured");
     return false;
   }
-  
+
   // Check Authorization header
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return false;
   }
-  
+
   const providedKey = authHeader.slice(7); // Remove 'Bearer ' prefix
   return providedKey === cacheApiKey;
 }
@@ -181,65 +199,72 @@ async function loadContent(): Promise<SiteContent> {
         description: "Personal gallery",
         owner: {
           name: "Owner",
-          bio: "Welcome to my portfolio"
-        }
+          bio: "Welcome to my portfolio",
+        },
       },
       navigation: [
-        { id: "home", title: "Home", path: "/" }
+        { id: "home", title: "Home", path: "/" },
       ],
       galleries: [],
       inspiration: {
         title: "Inspiration",
         description: "Content that inspires",
-        sections: []
+        sections: [],
       },
       theme: {
         primaryColor: "#2563eb",
         backgroundColor: "#000000",
         textColor: "#ffffff",
-        accentColor: "#3b82f6"
-      }
+        accentColor: "#3b82f6",
+      },
     };
   }
 }
 
 // Get images from Cloudinary by tag with intelligent caching and request coalescing
-async function getCloudinaryImagesByTag(tag: string, limit: number = 400): Promise<CloudinaryImage[]> {
+function getCloudinaryImagesByTag(
+  tag: string,
+  limit: number = 400,
+): Promise<CloudinaryImage[]> {
   try {
     const now = Date.now();
     const cached = imageCache[tag];
-    
+
     // Check if we have valid cache
-    if (cached && cached.images && (now - cached.lastFetched) < CACHE_DURATION) {
-      console.log(`📦 Using cached images for ${tag} (${cached.images.length} images)`);
+    if (
+      cached && cached.images && (now - cached.lastFetched) < CACHE_DURATION
+    ) {
+      console.log(
+        `📦 Using cached images for ${tag} (${cached.images.length} images)`,
+      );
       cached.lastAccessed = now; // Update access time for LRU
       return cached.images;
     }
-    
+
     // If a fetch is already in progress, return the existing promise
     if (cached?.promise) {
       console.log(`⏳ Waiting for in-progress fetch for ${tag}`);
       return cached.promise;
     }
-    
+
     // Create new fetch promise
     console.log(`🔄 Fetching fresh images for ${tag} tag (limit: ${limit})`);
     const fetchPromise = (async () => {
       const cloudinary = getCloudinary();
       const images = await cloudinary.getImagesByTag(tag, limit);
-      
+
       const dataSize = calculateImageDataSize(images);
       const now = Date.now();
-      
+
       // Update cache size tracking
       if (cached?.sizeBytes) {
         currentCacheSize -= cached.sizeBytes;
       }
       currentCacheSize += dataSize;
-      
+
       // Evict old entries if needed before adding new one
       evictLRUEntries();
-      
+
       // Update cache with fetched data
       imageCache[tag] = {
         images: images,
@@ -247,17 +272,19 @@ async function getCloudinaryImagesByTag(tag: string, limit: number = 400): Promi
         lastAccessed: now,
         count: images.length,
         sizeBytes: dataSize,
-        promise: undefined // Clear promise after completion
+        promise: undefined, // Clear promise after completion
       };
-      
+
       // Check if the image count has changed
       if (cached && cached.count !== images.length) {
-        console.log(`📊 Image count changed for ${tag}: ${cached.count} → ${images.length}`);
+        console.log(
+          `📊 Image count changed for ${tag}: ${cached.count} → ${images.length}`,
+        );
       }
-      
+
       return images;
     })();
-    
+
     // Store promise immediately to prevent duplicate requests
     imageCache[tag] = {
       images: cached?.images || [],
@@ -265,24 +292,24 @@ async function getCloudinaryImagesByTag(tag: string, limit: number = 400): Promi
       lastFetched: cached?.lastFetched || 0,
       lastAccessed: now,
       count: cached?.count || 0,
-      sizeBytes: cached?.sizeBytes || 0
+      sizeBytes: cached?.sizeBytes || 0,
     };
-    
+
     // Handle errors and cleanup
     return fetchPromise.catch((error) => {
       console.error(`Error fetching ${tag} tagged images:`, error);
-      
+
       // Clear failed promise from cache
       if (imageCache[tag]?.promise === fetchPromise) {
         imageCache[tag].promise = undefined;
       }
-      
+
       // If there's an error and we have cached data, return it
       if (cached?.images && cached.images.length > 0) {
         console.log(`⚠️ Using stale cache for ${tag} due to error`);
         return cached.images;
       }
-      
+
       return [];
     });
   } catch (error) {
@@ -292,22 +319,24 @@ async function getCloudinaryImagesByTag(tag: string, limit: number = 400): Promi
 }
 
 function generateNavigation(content: SiteContent): string {
-  const navItems = content.navigation.map(item => {
-    if (item.path === '/') {
+  const navItems = content.navigation.map((item) => {
+    if (item.path === "/") {
       return `
         <a href="/" class="text-lg font-medium hover:text-blue-600 transition-colors">
           home
         </a>
       `;
     }
-    return '';
-  }).join('');
+    return "";
+  }).join("");
 
-  const links = content.navigation.filter(item => item.path !== '/').map(item => `
+  const links = content.navigation.filter((item) => item.path !== "/").map(
+    (item) => `
     <a href="${item.path}" class="text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base">
       ${item.title.toLowerCase()}
     </a>
-  `).join('');
+  `,
+  ).join("");
 
   return `
     <nav class="border-b border-gray-200">
@@ -325,7 +354,7 @@ function generateNavigation(content: SiteContent): string {
 
 function generatePhotoGrid(images: CloudinaryImage[], title: string): string {
   const cloudinary = getCloudinary();
-  
+
   // Info box as first grid item
   const infoItem = `
     <div class="gallery-info-item">
@@ -334,47 +363,44 @@ function generatePhotoGrid(images: CloudinaryImage[], title: string): string {
       </div>
     </div>
   `;
-  
+
   const imageItems = images.map((img, index) => {
-    let imageUrl: string;
-    let thumbnailUrl: string;
-    let fullImageUrl: string;
-    let srcsetAttr = '';
-    let sizesAttr = '';
-    
-    imageUrl = cloudinary.getOptimizedUrl(img.public_id, {
+    let srcsetAttr = "";
+    let sizesAttr = "";
+
+    const imageUrl = cloudinary.getOptimizedUrl(img.public_id, {
       width: 800,
       height: 600,
-      crop: 'fill',
-      quality: 'auto',
-      format: 'auto'
+      crop: "fill",
+      quality: "auto",
+      format: "auto",
     });
-    
+
     // Small thumbnail for carousel (150x100 for 3:2 ratio)
-    thumbnailUrl = cloudinary.getOptimizedUrl(img.public_id, {
+    const thumbnailUrl = cloudinary.getOptimizedUrl(img.public_id, {
       width: 150,
       height: 100,
-      crop: 'fill',
-      quality: 'auto',
-      format: 'auto'
+      crop: "fill",
+      quality: "auto",
+      format: "auto",
     });
-    
+
     // Full resolution URL for popup (3:2 aspect ratio)
-    fullImageUrl = cloudinary.getOptimizedUrl(img.public_id, {
+    const fullImageUrl = cloudinary.getOptimizedUrl(img.public_id, {
       width: 1800,
       height: 1200,
-      crop: 'fill',
-      quality: '90',
-      format: 'auto'
+      crop: "fill",
+      quality: "90",
+      format: "auto",
     });
-    
+
     const responsiveSet = generateResponsiveImageSet(img.public_id);
     const sizes = getImageSizes();
     srcsetAttr = `srcset="${responsiveSet}"`;
     sizesAttr = `sizes="${sizes}"`;
-    
-    const altText = img.public_id.replace(/^.*\//, '').replace(/_/g, ' ');
-    
+
+    const altText = img.public_id.replace(/^.*\//, "").replace(/_/g, " ");
+
     return `
       <div class="photo-item" onclick="openImagePopup(${index})" tabindex="0" role="button" aria-label="View ${altText}" data-index="${index}">
         <div class="aspect-4-3 overflow-hidden rounded-lg bg-gray-100">
@@ -392,15 +418,18 @@ function generatePhotoGrid(images: CloudinaryImage[], title: string): string {
         </div>
       </div>
     `;
-  }).join('');
+  }).join("");
 
   return `${infoItem}${imageItems}`;
 }
 
-async function generateGalleryPage(gallery: SiteContent['galleries'][0], content: SiteContent): Promise<string> {
+async function generateGalleryPage(
+  gallery: SiteContent["galleries"][0],
+  content: SiteContent,
+): Promise<string> {
   const images = await getCloudinaryImagesByTag(gallery.cloudinaryTag);
   const galleryItems = generatePhotoGrid(images, gallery.title);
-  
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -705,18 +734,24 @@ async function generateGalleryPage(gallery: SiteContent['galleries'][0], content
 </html>`;
 }
 
-async function generateInspoPage(content: SiteContent): Promise<string> {
+function generateInspoPage(content: SiteContent): string {
   // Flatten all items from all sections into a single list
-  const allItems = content.inspiration.sections.flatMap(section => section.items);
-  
-  const items = allItems.map(item => `
+  const allItems = content.inspiration.sections.flatMap((section) =>
+    section.items
+  );
+
+  const items = allItems.map((item) => `
     <li class="simple-content-item">
       <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="content-link">
         ${item.title}
       </a>
-      ${item.description ? `<span class="content-duration">${item.description}</span>` : ''}
+      ${
+    item.description
+      ? `<span class="content-duration">${item.description}</span>`
+      : ""
+  }
     </li>
-  `).join('');
+  `).join("");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -748,15 +783,16 @@ async function generateInspoPage(content: SiteContent): Promise<string> {
 
 function generateHomePage(content: SiteContent): string {
   // Parse bio which may contain multiple paragraphs separated by |
-  const bioParagraphs = content.site.owner.bio.split('|').map(p => p.trim()).filter(p => p.length > 0);
-  
+  const bioParagraphs = content.site.owner.bio.split("|").map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
   // Generate bio HTML with bold first word of first paragraph
   const bioHtml = bioParagraphs.map((paragraph, index) => {
     if (index === 0) {
       // Bold the first word of the first paragraph
-      const words = paragraph.split(' ');
+      const words = paragraph.split(" ");
       const firstWord = words[0];
-      const restOfParagraph = words.slice(1).join(' ');
+      const restOfParagraph = words.slice(1).join(" ");
       return `<p class="text-lg text-gray-700 leading-relaxed mb-6">
                     <b>${firstWord}</b> ${restOfParagraph}
                 </p>`;
@@ -765,17 +801,17 @@ function generateHomePage(content: SiteContent): string {
                     ${paragraph}
                 </p>`;
     }
-  }).join('');
-  
+  }).join("");
+
   // Only show hobbies section if hobbies exist
   const hobbies = content.site.owner.hobbies;
-  let hobbySection = '';
-  
+  let hobbySection = "";
+
   if (hobbies && hobbies.length > 0) {
-    const hobbyList = hobbies.map(hobby => 
+    const hobbyList = hobbies.map((hobby) =>
       `<li class="simple-content-item">${hobby}</li>`
-    ).join('');
-    
+    ).join("");
+
     hobbySection = `
                 <p class="text-lg text-gray-700 leading-relaxed mb-6">
                     an enthusiast of the following:
@@ -788,11 +824,13 @@ function generateHomePage(content: SiteContent): string {
 
   // Only show quote if it exists
   const quote = content.site.owner.quote;
-  const quoteSection = quote ? `
+  const quoteSection = quote
+    ? `
                 <br><br>
                 <p class="text-base text-gray-600 italic">
                     "${quote}"
-                </p>` : '';
+                </p>`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -821,43 +859,56 @@ function generateHomePage(content: SiteContent): string {
 async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const { pathname } = url;
-  
+
   // Cache control endpoints (protected)
   if (pathname.startsWith("/api/cache/")) {
     // Validate API access
     if (!validateCacheApiAccess(req)) {
-      return new Response(JSON.stringify({ error: "Unauthorized. Please provide a valid API key in the Authorization header." }), {
-        status: 401,
-        headers: { 
-          "Content-Type": "application/json",
-          "WWW-Authenticate": "Bearer realm=\"Cache API\""
+      return new Response(
+        JSON.stringify({
+          error:
+            "Unauthorized. Please provide a valid API key in the Authorization header.",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+            "WWW-Authenticate": 'Bearer realm="Cache API"',
+          },
         },
-      });
+      );
     }
-    
+
     if (pathname === "/api/cache/clear") {
       // Clear all cache
       let clearedEntries = 0;
       let clearedSize = 0;
-      
+
       for (const key in imageCache) {
         clearedSize += imageCache[key].sizeBytes;
         delete imageCache[key];
         clearedEntries++;
       }
-      
+
       currentCacheSize = 0; // Reset cache size counter
-      console.log(`🗑️ Image cache cleared: ${clearedEntries} entries, ${Math.round(clearedSize / 1024)}KB`);
-      
-      return new Response(JSON.stringify({ 
-        message: "Cache cleared successfully",
-        entriesCleared: clearedEntries,
-        sizeCleared: Math.round(clearedSize / 1024)
-      }), {
-        headers: { "Content-Type": "application/json" },
-      });
+      console.log(
+        `🗑️ Image cache cleared: ${clearedEntries} entries, ${
+          Math.round(clearedSize / 1024)
+        }KB`,
+      );
+
+      return new Response(
+        JSON.stringify({
+          message: "Cache cleared successfully",
+          entriesCleared: clearedEntries,
+          sizeCleared: Math.round(clearedSize / 1024),
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
-    
+
     if (pathname === "/api/cache/status") {
       // Get cache status
       const now = Date.now();
@@ -869,22 +920,25 @@ async function handler(req: Request): Promise<Response> {
         lastAccessed: new Date(data.lastAccessed).toISOString(),
         ageSeconds: Math.floor((now - data.lastFetched) / 1000),
         expired: now - data.lastFetched > CACHE_DURATION,
-        hasActiveRequest: !!data.promise
+        hasActiveRequest: !!data.promise,
       }));
-      
-      return new Response(JSON.stringify({ 
-        cacheEntries: status,
-        totalEntries: Object.keys(imageCache).length,
-        totalSizeMB: Math.round(currentCacheSize / 1024 / 1024 * 100) / 100,
-        maxSizeMB: MAX_CACHE_SIZE / 1024 / 1024,
-        maxEntries: MAX_CACHE_ENTRIES,
-        cacheDurationSeconds: CACHE_DURATION / 1000
-      }), {
-        headers: { "Content-Type": "application/json" },
-      });
+
+      return new Response(
+        JSON.stringify({
+          cacheEntries: status,
+          totalEntries: Object.keys(imageCache).length,
+          totalSizeMB: Math.round(currentCacheSize / 1024 / 1024 * 100) / 100,
+          maxSizeMB: MAX_CACHE_SIZE / 1024 / 1024,
+          maxEntries: MAX_CACHE_ENTRIES,
+          cacheDurationSeconds: CACHE_DURATION / 1000,
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
   }
-  
+
   // Load content for each request to allow hot reloading
   const content = await loadContent();
 
@@ -908,7 +962,7 @@ async function handler(req: Request): Promise<Response> {
   }
 
   // Handle gallery routes dynamically
-  const gallery = content.galleries.find(g => `/${g.id}` === pathname);
+  const gallery = content.galleries.find((g) => `/${g.id}` === pathname);
   if (gallery) {
     const galleryPage = await generateGalleryPage(gallery, content);
     return new Response(galleryPage, {
@@ -928,7 +982,7 @@ async function handler(req: Request): Promise<Response> {
   if (pathname === "/content" || pathname === "/links") {
     return new Response("", {
       status: 301,
-      headers: { "Location": "/inspo" }
+      headers: { "Location": "/inspo" },
     });
   }
 
@@ -937,53 +991,57 @@ async function handler(req: Request): Promise<Response> {
 
 if (import.meta.main) {
   const content = await loadContent();
-  
+
   // Start periodic cache cleanup
   startPeriodicCleanup();
-  
+
   console.log(`🚀 ${content.site.title} starting on http://localhost:8737`);
   console.log("📱 Full-span gallery pages with tag-based image loading:");
   console.log("   http://localhost:8737/ (Home)");
-  
-  content.galleries.forEach(gallery => {
+
+  content.galleries.forEach((gallery) => {
     console.log(`   http://localhost:8737/${gallery.id} (${gallery.title})`);
   });
-  
+
   console.log("   http://localhost:8737/inspo (Inspiration)");
-  
+
   // Show Cloudinary configuration status
-  const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
-  const hasApiKey = !!Deno.env.get('CLOUDINARY_API_KEY');
-  const hasApiSecret = !!Deno.env.get('CLOUDINARY_API_SECRET');
-  
+  const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
+  const hasApiKey = !!Deno.env.get("CLOUDINARY_API_KEY");
+  const hasApiSecret = !!Deno.env.get("CLOUDINARY_API_SECRET");
+
   console.log("\n☁️ Cloudinary Status:");
-  console.log(`   Cloud Name: ${cloudName || '❌ Not set'}`);
-  console.log(`   API Key: ${hasApiKey ? '✅ Set' : '❌ Not set'}`);
-  console.log(`   API Secret: ${hasApiSecret ? '✅ Set' : '❌ Not set'}`);
-  
+  console.log(`   Cloud Name: ${cloudName || "❌ Not set"}`);
+  console.log(`   API Key: ${hasApiKey ? "✅ Set" : "❌ Not set"}`);
+  console.log(`   API Secret: ${hasApiSecret ? "✅ Set" : "❌ Not set"}`);
+
   if (!cloudName || !hasApiKey || !hasApiSecret) {
     console.log("   ⚠️  Using mock data - update .env file for real images");
   } else {
     console.log("   ✅ Ready to fetch real Cloudinary images by tags!");
   }
-  
+
   console.log("\n📝 Content Configuration:");
   console.log("   Edit content.json to customize your site");
   console.log("   Run 'deno task edit' for interactive content editor");
-  
+
   console.log("\n🔐 Cache API Security:");
-  const hasCacheKey = !!Deno.env.get('CACHE_API_KEY');
-  console.log(`   Cache API Key: ${hasCacheKey ? '✅ Configured' : '❌ Not set (endpoints disabled)'}`);
+  const hasCacheKey = !!Deno.env.get("CACHE_API_KEY");
+  console.log(
+    `   Cache API Key: ${
+      hasCacheKey ? "✅ Configured" : "❌ Not set (endpoints disabled)"
+    }`,
+  );
   if (hasCacheKey) {
     console.log("   Endpoints: /api/cache/status, /api/cache/clear");
     console.log("   Usage: Include 'Authorization: Bearer <key>' header");
   }
-  
+
   console.log("\n🌐 Server Status:");
   console.log("   Listening on http://localhost:8737/\n");
-  
-  Deno.serve({ 
+
+  Deno.serve({
     port: 8737,
-    onListen: () => {} // Suppress default "Listening on..." message
+    onListen: () => {}, // Suppress default "Listening on..." message
   }, handler);
 }

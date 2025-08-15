@@ -33,7 +33,10 @@ export class CloudinaryClient {
   /**
    * Get images from a specific folder
    */
-  async getImagesByFolder(folder: string, maxResults = 50): Promise<CloudinaryImage[]> {
+  async getImagesByFolder(
+    folder: string,
+    maxResults = 50,
+  ): Promise<CloudinaryImage[]> {
     if (!this.config.apiKey || !this.config.apiSecret) {
       console.warn("Cloudinary API credentials not provided, using mock data");
       return this.getMockImages(folder, maxResults);
@@ -42,20 +45,24 @@ export class CloudinaryClient {
     try {
       const url = `${this.baseUrl}/resources/image`;
       const params = new URLSearchParams({
-        type: 'upload',
+        type: "upload",
         prefix: folder,
         max_results: maxResults.toString(),
-        resource_type: 'image'
+        resource_type: "image",
       });
 
       const response = await fetch(`${url}?${params}`, {
         headers: {
-          'Authorization': `Basic ${btoa(`${this.config.apiKey}:${this.config.apiSecret}`)}`
-        }
+          "Authorization": `Basic ${
+            btoa(`${this.config.apiKey}:${this.config.apiSecret}`)
+          }`,
+        },
       });
 
       if (!response.ok) {
-        throw new Error(`Cloudinary API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Cloudinary API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data: CloudinaryListResponse = await response.json();
@@ -69,7 +76,10 @@ export class CloudinaryClient {
   /**
    * Get images by tag
    */
-  async getImagesByTag(tag: string, maxResults = 50): Promise<CloudinaryImage[]> {
+  async getImagesByTag(
+    tag: string,
+    maxResults = 50,
+  ): Promise<CloudinaryImage[]> {
     if (!this.config.apiKey || !this.config.apiSecret) {
       console.warn("Cloudinary API credentials not provided, using mock data");
       return this.getMockImages(tag, maxResults);
@@ -79,17 +89,21 @@ export class CloudinaryClient {
       const url = `${this.baseUrl}/resources/image/tags/${tag}`;
       const params = new URLSearchParams({
         max_results: maxResults.toString(),
-        resource_type: 'image'
+        resource_type: "image",
       });
 
       const response = await fetch(`${url}?${params}`, {
         headers: {
-          'Authorization': `Basic ${btoa(`${this.config.apiKey}:${this.config.apiSecret}`)}`
-        }
+          "Authorization": `Basic ${
+            btoa(`${this.config.apiKey}:${this.config.apiSecret}`)
+          }`,
+        },
       });
 
       if (!response.ok) {
-        throw new Error(`Cloudinary API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Cloudinary API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data: CloudinaryListResponse = await response.json();
@@ -103,25 +117,29 @@ export class CloudinaryClient {
   /**
    * Test Cloudinary connection
    */
-  async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
+  async testConnection(): Promise<
+    { success: boolean; message: string; details?: unknown }
+  > {
     if (!this.config.apiKey || !this.config.apiSecret) {
       return {
         success: false,
-        message: "API credentials not provided"
+        message: "API credentials not provided",
       };
     }
 
     try {
       const url = `${this.baseUrl}/resources/image`;
       const params = new URLSearchParams({
-        max_results: '1',
-        resource_type: 'image'
+        max_results: "1",
+        resource_type: "image",
       });
 
       const response = await fetch(`${url}?${params}`, {
         headers: {
-          'Authorization': `Basic ${btoa(`${this.config.apiKey}:${this.config.apiSecret}`)}`
-        }
+          "Authorization": `Basic ${
+            btoa(`${this.config.apiKey}:${this.config.apiSecret}`)
+          }`,
+        },
       });
 
       if (!response.ok) {
@@ -129,21 +147,25 @@ export class CloudinaryClient {
         return {
           success: false,
           message: `API error: ${response.status} ${response.statusText}`,
-          details: errorText
+          details: errorText,
         };
       }
 
       const data = await response.json();
       return {
         success: true,
-        message: `Connected successfully! Found ${data.resources?.length || 0} images in account`,
-        details: data
+        message: `Connected successfully! Found ${
+          data.resources?.length || 0
+        } images in account`,
+        details: data,
       };
     } catch (error) {
       return {
         success: false,
-        message: `Network error: ${error instanceof Error ? error.message : String(error)}`,
-        details: error
+        message: `Network error: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        details: error,
       };
     }
   }
@@ -161,9 +183,9 @@ export class CloudinaryClient {
     const {
       width = 800,
       height = 600,
-      crop = 'fill',
-      quality = 'auto',
-      format = 'auto'
+      crop = "fill",
+      quality = "auto",
+      format = "auto",
     } = options;
 
     const transformations = [
@@ -171,8 +193,8 @@ export class CloudinaryClient {
       height && `h_${height}`,
       crop && `c_${crop}`,
       quality && `q_${quality}`,
-      format && `f_${format}`
-    ].filter(Boolean).join(',');
+      format && `f_${format}`,
+    ].filter(Boolean).join(",");
 
     return `https://res.cloudinary.com/${this.config.cloudName}/image/upload/${transformations}/${publicId}`;
   }
@@ -181,28 +203,40 @@ export class CloudinaryClient {
    * Mock data for development/testing
    */
   private getMockImages(folder: string, count: number): CloudinaryImage[] {
-    console.log(`📷 Using mock images for ${folder} tag (API authentication failed)`);
+    console.log(
+      `📷 Using mock images for ${folder} tag (API authentication failed)`,
+    );
     const images: CloudinaryImage[] = [];
-    
+
     for (let i = 1; i <= count; i++) {
-      const colors = ['6366f1', '8b5cf6', '06b6d4', '10b981', 'ef4444', 'f59e0b'];
+      const colors = [
+        "6366f1",
+        "8b5cf6",
+        "06b6d4",
+        "10b981",
+        "ef4444",
+        "f59e0b",
+      ];
       const color = colors[(i - 1) % colors.length];
-      
+
       // Use placeholder URLs directly instead of trying to generate Cloudinary URLs
-      const placeholderUrl = `https://via.placeholder.com/800x600/${color}/ffffff?text=${encodeURIComponent(folder.toUpperCase())}+${i}`;
-      
+      const placeholderUrl =
+        `https://via.placeholder.com/800x600/${color}/ffffff?text=${
+          encodeURIComponent(folder.toUpperCase())
+        }+${i}`;
+
       images.push({
-        public_id: `mock_${folder}_${i.toString().padStart(2, '0')}`,
+        public_id: `mock_${folder}_${i.toString().padStart(2, "0")}`,
         secure_url: placeholderUrl,
         width: 800,
         height: 600,
-        format: 'jpg',
-        resource_type: 'image',
+        format: "jpg",
+        resource_type: "image",
         created_at: new Date().toISOString(),
-        bytes: 150000 + Math.floor(Math.random() * 100000)
+        bytes: 150000 + Math.floor(Math.random() * 100000),
       });
     }
-    
+
     return images;
   }
 }
@@ -210,9 +244,9 @@ export class CloudinaryClient {
 // Export function to get cloudinary instance with current environment
 export function getCloudinary(): CloudinaryClient {
   return new CloudinaryClient({
-    cloudName: Deno.env.get('CLOUDINARY_CLOUD_NAME') || 'demo-cloud',
-    apiKey: Deno.env.get('CLOUDINARY_API_KEY'),
-    apiSecret: Deno.env.get('CLOUDINARY_API_SECRET')
+    cloudName: Deno.env.get("CLOUDINARY_CLOUD_NAME") || "demo-cloud",
+    apiKey: Deno.env.get("CLOUDINARY_API_KEY"),
+    apiSecret: Deno.env.get("CLOUDINARY_API_SECRET"),
   });
 }
 
@@ -220,15 +254,18 @@ export function getCloudinary(): CloudinaryClient {
 export const cloudinary = getCloudinary();
 
 // Utility functions
-export function generateResponsiveImageSet(publicId: string, baseWidth = 800): string {
+export function generateResponsiveImageSet(
+  publicId: string,
+  _baseWidth = 800,
+): string {
   const client = getCloudinary(); // Get fresh instance
   const sizes = [400, 600, 800, 1200];
-  
-  return sizes.map(width => {
+
+  return sizes.map((width) => {
     const height = Math.round(width * 0.75); // 4:3 aspect ratio
     const url = client.getOptimizedUrl(publicId, { width, height });
     return `${url} ${width}w`;
-  }).join(', ');
+  }).join(", ");
 }
 
 export function getImageSizes(): string {

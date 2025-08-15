@@ -1,7 +1,7 @@
 /* Tailwind CSS fallbacks - Mobile-first responsive design */
-@import url('https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/base.css');
-@import url('https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/components.css');
-@import url('https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/utilities.css');
+@import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/base.css");
+@import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/components.css");
+@import url("https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/utilities.css");
 
 /* Base styles with Preflight reset */
 *,
@@ -18,7 +18,17 @@ html {
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
   tab-size: 4;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    sans-serif;
 }
 
 body {
@@ -182,7 +192,13 @@ body {
 }
 
 .transition-colors {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property:
+    color,
+    background-color,
+    border-color,
+    text-decoration-color,
+    fill,
+    stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
@@ -260,31 +276,31 @@ body {
   .sm\:flex {
     display: flex;
   }
-  
+
   .sm\:hidden {
     display: none;
   }
-  
+
   .sm\:flex-row {
     flex-direction: row;
   }
-  
+
   .sm\:items-start {
     align-items: flex-start;
   }
-  
+
   .sm\:justify-between {
     justify-content: space-between;
   }
-  
+
   .sm\:mb-0 {
     margin-bottom: 0;
   }
-  
+
   .space-x-6 > * + * {
     margin-left: 1.5rem;
   }
-  
+
   .space-x-8 > * + * {
     margin-left: 2rem;
   }
@@ -294,7 +310,7 @@ body {
   .md\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
+
   .md\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -304,7 +320,7 @@ body {
   .lg\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  
+
   .lg\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -385,19 +401,19 @@ body {
     padding: 1rem;
     gap: 1rem;
   }
-  
+
   .gallery-info-item {
     padding: 1rem;
   }
-  
+
   .gallery-info-title {
     font-size: 2rem;
   }
-  
+
   .gallery-info-description {
     font-size: 0.8125rem;
   }
-  
+
   .homepage-title {
     font-size: 3rem;
   }
@@ -409,32 +425,32 @@ body {
     padding: 1rem;
     gap: 1rem;
   }
-  
+
   .gallery-info-item {
     padding: 1rem;
   }
-  
+
   .gallery-info-title {
     font-size: 1.75rem;
   }
-  
+
   .gallery-info-description {
     font-size: 0.75rem;
   }
-  
+
   .homepage-title {
     font-size: 2.5rem;
   }
-  
+
   /* Mobile portrait navigation spacing */
   nav a {
     padding: 0.5rem;
   }
-  
+
   nav .flex > a {
     margin-left: 0 !important;
   }
-  
+
   nav .flex > a + a {
     margin-left: 1rem !important;
   }
@@ -647,8 +663,14 @@ img {
 
 .popup-image-wrapper {
   position: relative;
-  width: min(90vw, calc((100vh - 220px) * 1.5)); /* 3:2 ratio based on available height */
-  height: min(calc(90vw / 1.5), calc(100vh - 220px)); /* 3:2 ratio based on available width */
+  width: min(
+    90vw,
+    calc((100vh - 220px) * 1.5)
+  ); /* 3:2 ratio based on available height */
+  height: min(
+    calc(90vw / 1.5),
+    calc(100vh - 220px)
+  ); /* 3:2 ratio based on available width */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -792,34 +814,34 @@ body.popup-open {
   .popup-controls {
     padding: 10px 15px;
   }
-  
+
   .popup-control-btn {
     width: 35px;
     height: 35px;
   }
-  
+
   .popup-main-container {
     padding: 60px 10px 110px;
   }
-  
+
   .popup-nav {
     width: 40px;
     height: 40px;
   }
-  
+
   .popup-nav.prev {
     left: 10px;
   }
-  
+
   .popup-nav.next {
     right: 10px;
   }
-  
+
   .popup-carousel {
     height: 80px;
     padding: 5px 10px;
   }
-  
+
   .carousel-item {
     width: 100px;
     height: 70px;

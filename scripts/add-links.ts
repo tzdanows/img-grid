@@ -1,6 +1,9 @@
 #!/usr/bin/env -S deno run -A
 
-import { Input, Number } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
+import {
+  Input,
+  Number,
+} from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
 
 interface SiteContent {
   site: {
@@ -54,7 +57,9 @@ async function loadContent(): Promise<SiteContent> {
     return JSON.parse(content);
   } catch (error) {
     console.error("❌ Error loading content.json:", error);
-    console.log("Please run 'deno task setup' first to create your content.json file.");
+    console.log(
+      "Please run 'deno task setup' first to create your content.json file.",
+    );
     Deno.exit(1);
   }
 }
@@ -67,45 +72,47 @@ async function saveContent(content: SiteContent): Promise<void> {
 function isValidUrl(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
   } catch {
     return false;
   }
 }
 
-
 async function addLinks() {
   console.log("🔗 Add Links to Inspiration Page\n");
-  
+
   // Load existing content
   const content = await loadContent();
-  
+
   // Ensure inspiration section exists
   if (!content.inspiration) {
     content.inspiration = {
       title: "Inspiration",
       description: "Content that inspires",
-      sections: []
+      sections: [],
     };
   }
-  
+
   // Ensure we have at least one section (for backward compatibility)
   if (content.inspiration.sections.length === 0) {
     content.inspiration.sections.push({
       title: "Links",
-      items: []
+      items: [],
     });
   }
-  
+
   // Always add to the first section (since we're using a single list now)
   const sectionIndex = 0;
-  
+
   // Show current link count
-  const totalLinks = content.inspiration.sections.reduce((sum, section) => sum + section.items.length, 0);
+  const totalLinks = content.inspiration.sections.reduce(
+    (sum, section) => sum + section.items.length,
+    0,
+  );
   if (totalLinks > 0) {
     console.log(`📊 Currently ${totalLinks} link(s) on the inspiration page\n`);
   }
-  
+
   // Ask how many links to add
   const numLinks = await Number.prompt({
     message: "How many links do you want to add?",
@@ -113,18 +120,18 @@ async function addLinks() {
     min: 1,
     max: 20,
   });
-  
+
   console.log(`\n🔗 Adding ${numLinks} link(s):\n`);
-  
+
   // Add each link
   for (let i = 0; i < numLinks; i++) {
     console.log(`\nLink ${i + 1}:`);
-    
+
     const title = await Input.prompt({
       message: "Link title:",
-      validate: (value) => value.length > 0 || "Title is required"
+      validate: (value) => value.length > 0 || "Title is required",
     });
-    
+
     const url = await Input.prompt({
       message: "URL:",
       validate: (value) => {
@@ -132,30 +139,33 @@ async function addLinks() {
           return "Please enter a valid URL (must start with http:// or https://)";
         }
         return true;
-      }
+      },
     });
-    
+
     const description = await Input.prompt({
       message: "Description (optional, press Enter to skip):",
-      default: ""
+      default: "",
     });
-    
+
     // Add link to section
     content.inspiration.sections[sectionIndex].items.push({
       title,
       url,
       type: "link", // Always use generic "link" type
-      description: description || undefined
+      description: description || undefined,
     });
-    
+
     console.log(`✅ Added "${title}"`);
   }
-  
+
   // Save updated content
   await saveContent(content);
-  
+
   // Summary
-  const newTotalLinks = content.inspiration.sections.reduce((sum, section) => sum + section.items.length, 0);
+  const newTotalLinks = content.inspiration.sections.reduce(
+    (sum, section) => sum + section.items.length,
+    0,
+  );
   console.log("\n🎉 Links added successfully!");
   console.log(`\n📊 Total links on inspiration page: ${newTotalLinks}`);
   console.log("\n💡 Tips:");
