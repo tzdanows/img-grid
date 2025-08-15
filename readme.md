@@ -77,7 +77,9 @@ OR
 ```bash
 deno task deploy
 ```
-[read more here on deployment](https://docs.deno.com/deploy/manual/deployctl/) --> _I'll update deployment docs later_
+
+[read more here on deployment](https://docs.deno.com/deploy/manual/deployctl/)
+--> _I'll update deployment docs later_
 
 ## Commands
 
@@ -96,10 +98,12 @@ deno task deploy
    - Route OR Gallery: `/street` → Cloudinary tag `street`
    - Route OR Gallery: `/portrait` → Cloudinary tag `portrait`
 
-2. **Content/Structure Management**: All website structure stored in `content.json`
+2. **Content/Structure Management**: All website structure stored in
+   `content.json`
    - Site info, navigation, galleries, inspiration links
    - Hot-reloads when edited
-   - Any information not set by scripts, can be edited directly in `content.json`
+   - Any information not set by scripts, can be edited directly in
+     `content.json`
 
 3. **Photo Management**: Upload to Cloudinary with matching tags
    - Images automatically appear in galleries
