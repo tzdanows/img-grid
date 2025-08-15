@@ -335,8 +335,10 @@ function generatePhotoGrid(images: CloudinaryImage[], title: string): string {
     </div>
   `;
   
-  const imageItems = images.map(img => {
+  const imageItems = images.map((img, index) => {
     let imageUrl: string;
+    let thumbnailUrl: string;
+    let fullImageUrl: string;
     let srcsetAttr = '';
     let sizesAttr = '';
     
@@ -348,6 +350,24 @@ function generatePhotoGrid(images: CloudinaryImage[], title: string): string {
       format: 'auto'
     });
     
+    // Small thumbnail for carousel (150x100 for 3:2 ratio)
+    thumbnailUrl = cloudinary.getOptimizedUrl(img.public_id, {
+      width: 150,
+      height: 100,
+      crop: 'fill',
+      quality: 'auto',
+      format: 'auto'
+    });
+    
+    // Full resolution URL for popup (3:2 aspect ratio)
+    fullImageUrl = cloudinary.getOptimizedUrl(img.public_id, {
+      width: 1800,
+      height: 1200,
+      crop: 'fill',
+      quality: '90',
+      format: 'auto'
+    });
+    
     const responsiveSet = generateResponsiveImageSet(img.public_id);
     const sizes = getImageSizes();
     srcsetAttr = `srcset="${responsiveSet}"`;
@@ -356,15 +376,18 @@ function generatePhotoGrid(images: CloudinaryImage[], title: string): string {
     const altText = img.public_id.replace(/^.*\//, '').replace(/_/g, ' ');
     
     return `
-      <div class="photo-item group cursor-pointer">
+      <div class="photo-item" onclick="openImagePopup(${index})" tabindex="0" role="button" aria-label="View ${altText}" data-index="${index}">
         <div class="aspect-4-3 overflow-hidden rounded-lg bg-gray-100">
           <img 
             src="${imageUrl}" 
             ${srcsetAttr}
             ${sizesAttr}
             alt="${altText}"
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            class="w-full h-full object-cover"
             loading="lazy"
+            data-full-url="${fullImageUrl}"
+            data-thumb-url="${thumbnailUrl}"
+            data-public-id="${img.public_id}"
           />
         </div>
       </div>
@@ -394,6 +417,290 @@ async function generateGalleryPage(gallery: SiteContent['galleries'][0], content
             ${galleryItems}
         </main>
     </div>
+    
+    <!-- Image Popup with Carousel -->
+    <div id="imagePopup" class="image-popup">
+        <!-- Top Controls -->
+        <div class="popup-controls">
+            <div class="popup-controls-left">
+                <button class="popup-control-btn" onclick="closeImagePopup()" aria-label="Close">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="popup-controls-right">
+                <button class="popup-control-btn" onclick="downloadCurrentImage()" aria-label="Download">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </button>
+                <button class="popup-control-btn" onclick="openInNewTab()" aria-label="Open in new tab">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Image Container -->
+        <div class="popup-main-container">
+            <button class="popup-nav prev" onclick="navigateImage(-1)" aria-label="Previous">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            
+            <div class="popup-image-wrapper">
+                <div class="popup-loading">Loading...</div>
+                <img id="popupImage" class="popup-image" alt="" />
+            </div>
+            
+            <button class="popup-nav next" onclick="navigateImage(1)" aria-label="Next">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Bottom Carousel -->
+        <div id="popupCarousel" class="popup-carousel"></div>
+    </div>
+    
+    <script>
+        let popupOpen = false;
+        let currentImageIndex = 0;
+        let galleryImages = [];
+        
+        // Initialize gallery images array
+        function initGalleryImages() {
+            const items = document.querySelectorAll('.photo-item');
+            galleryImages = Array.from(items).map((item, index) => {
+                const img = item.querySelector('img');
+                return {
+                    index: index,
+                    thumbUrl: img.dataset.thumbUrl || img.src, // Use dedicated thumbnail
+                    fullUrl: img.dataset.fullUrl,
+                    publicId: img.dataset.publicId,
+                    alt: img.alt
+                };
+            });
+        }
+        
+        // Build carousel
+        function buildCarousel() {
+            const carousel = document.getElementById('popupCarousel');
+            carousel.innerHTML = galleryImages.map((img, index) => 
+                '<div class="carousel-item ' + (index === currentImageIndex ? 'active' : '') + '" ' +
+                'onclick="jumpToImage(' + index + ')" ' +
+                'data-index="' + index + '">' +
+                '<img src="' + img.thumbUrl + '" alt="' + img.alt + '" loading="lazy" />' +
+                '</div>'
+            ).join('');
+        }
+        
+        // Preload images for smooth navigation
+        function preloadImages(centerIndex, range = 10) {
+            const start = Math.max(0, centerIndex - range);
+            const end = Math.min(galleryImages.length - 1, centerIndex + range);
+            
+            for (let i = start; i <= end; i++) {
+                if (i !== centerIndex) { // Current image is already loading
+                    const img = new Image();
+                    img.src = galleryImages[i].fullUrl;
+                    // Also preload carousel thumbnails if not already loaded
+                    const thumb = new Image();
+                    thumb.src = galleryImages[i].thumbUrl;
+                }
+            }
+        }
+        
+        // Open popup at specific image
+        function openImagePopup(index) {
+            if (galleryImages.length === 0) {
+                initGalleryImages();
+            }
+            
+            currentImageIndex = index;
+            const popup = document.getElementById('imagePopup');
+            
+            popup.classList.add('active');
+            document.body.classList.add('popup-open');
+            popupOpen = true;
+            
+            buildCarousel();
+            loadImage(currentImageIndex);
+            
+            // Start preloading nearby images
+            setTimeout(() => {
+                preloadImages(currentImageIndex, 10); // Preload ±10 images
+            }, 100); // Small delay to prioritize current image
+        }
+        
+        // Load specific image
+        function loadImage(index) {
+            const popupImage = document.getElementById('popupImage');
+            const loading = document.querySelector('.popup-loading');
+            const image = galleryImages[index];
+            
+            if (!image) return;
+            
+            // Update active carousel item
+            document.querySelectorAll('.carousel-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            
+            // Scroll carousel to show active item
+            const activeItem = document.querySelector('.carousel-item.active');
+            if (activeItem) {
+                activeItem.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+            
+            // Hide loading initially, show after delay if still loading
+            loading.style.display = 'none';
+            popupImage.style.display = 'none';
+            
+            let loadingTimeout = setTimeout(() => {
+                // Only show loading if image hasn't loaded yet
+                if (popupImage.style.display === 'none') {
+                    loading.style.display = 'block';
+                }
+            }, 2000); // 2 second delay
+            
+            // Load image
+            const img = new Image();
+            img.onload = function() {
+                clearTimeout(loadingTimeout);
+                popupImage.src = image.fullUrl;
+                popupImage.alt = image.alt;
+                loading.style.display = 'none';
+                popupImage.style.display = 'block';
+            };
+            img.onerror = function() {
+                clearTimeout(loadingTimeout);
+                loading.style.display = 'block';
+                loading.textContent = 'Failed to load image';
+            };
+            img.src = image.fullUrl;
+            
+            currentImageIndex = index;
+            
+            // Preload adjacent images as user navigates
+            preloadImages(index, 5); // Smaller range for navigation
+        }
+        
+        // Navigate between images
+        function navigateImage(direction) {
+            const newIndex = currentImageIndex + direction;
+            if (newIndex >= 0 && newIndex < galleryImages.length) {
+                loadImage(newIndex);
+            }
+        }
+        
+        // Jump to specific image
+        function jumpToImage(index) {
+            loadImage(index);
+        }
+        
+        // Close popup
+        function closeImagePopup() {
+            const popup = document.getElementById('imagePopup');
+            popup.classList.remove('active');
+            document.body.classList.remove('popup-open');
+            popupOpen = false;
+            
+            // Clean up
+            const popupImage = document.getElementById('popupImage');
+            popupImage.src = '';
+            popupImage.alt = '';
+        }
+        
+        // Download current image
+        async function downloadCurrentImage() {
+            const image = galleryImages[currentImageIndex];
+            if (!image) return;
+            
+            try {
+                // Fetch the image as a blob
+                const response = await fetch(image.fullUrl);
+                const blob = await response.blob();
+                
+                // Create a blob URL
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // Create download link
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = image.alt.replace(/\\s+/g, '_') + '.jpg';
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+            } catch (error) {
+                console.error('Download failed:', error);
+                // Fallback to opening in new tab if download fails
+                window.open(image.fullUrl, '_blank');
+            }
+        }
+        
+        // Open in new tab
+        function openInNewTab() {
+            const image = galleryImages[currentImageIndex];
+            if (!image) return;
+            window.open(image.fullUrl, '_blank');
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (!popupOpen) return;
+            
+            switch(event.key) {
+                case 'Escape':
+                    closeImagePopup();
+                    break;
+                case 'ArrowLeft':
+                    navigateImage(-1);
+                    break;
+                case 'ArrowRight':
+                    navigateImage(1);
+                    break;
+            }
+        });
+        
+        // Allow keyboard activation of images
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && event.target.classList.contains('photo-item')) {
+                const index = parseInt(event.target.dataset.index);
+                openImagePopup(index);
+            }
+        });
+        
+        // Preload all carousel thumbnails after page load
+        function preloadAllThumbnails() {
+            const images = document.querySelectorAll('.photo-item img');
+            images.forEach(img => {
+                if (img.dataset.thumbUrl) {
+                    const thumb = new Image();
+                    thumb.src = img.dataset.thumbUrl;
+                }
+            });
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initGalleryImages();
+            // Preload thumbnails after a short delay to not block initial page render
+            setTimeout(preloadAllThumbnails, 500);
+        });
+    </script>
 </body>
 </html>`;
 }

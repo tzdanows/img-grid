@@ -366,6 +366,11 @@ body {
   width: 100%;
 }
 
+/* Group hover utilities (for photo items) */
+.group:hover .group-hover\:scale-105 {
+  transform: scale(1.05);
+}
+
 /* Responsive adjustments - Full span at all sizes */
 @media (max-width: 1024px) {
   .gallery-container {
@@ -533,4 +538,290 @@ a:hover {
 img {
   height: auto;
   max-width: 100%;
+}
+
+/* Gallery Image Hover Effects */
+.photo-item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.photo-item:hover {
+  transform: scale(1.07);
+  z-index: 10;
+}
+
+.photo-item img {
+  transition: filter 0.3s ease;
+}
+
+.photo-item:hover img {
+  filter: brightness(1.1);
+}
+
+/* Image Popup Overlay */
+.image-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.image-popup.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Top controls bar */
+.popup-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 30px;
+  z-index: 1002;
+}
+
+.popup-controls-left {
+  display: flex;
+  gap: 15px;
+}
+
+.popup-controls-right {
+  display: flex;
+  gap: 15px;
+}
+
+.popup-control-btn {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.popup-control-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: #008080;
+}
+
+.popup-control-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 2;
+  fill: none;
+}
+
+.popup-control-btn:hover svg {
+  stroke: #008080;
+}
+
+/* Main image container */
+.popup-main-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px 140px; /* Space for controls and carousel */
+  position: relative;
+}
+
+.popup-image-wrapper {
+  position: relative;
+  width: min(90vw, calc((100vh - 220px) * 1.5)); /* 3:2 ratio based on available height */
+  height: min(calc(90vw / 1.5), calc(100vh - 220px)); /* 3:2 ratio based on available width */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.popup-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Use cover to fill the 3:2 container */
+  border-radius: 4px;
+}
+
+/* Carousel at bottom */
+.popup-carousel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 1001;
+}
+
+.carousel-item {
+  flex-shrink: 0;
+  width: 150px;
+  height: 100px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.carousel-item:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.carousel-item.active {
+  border-color: #008080;
+}
+
+.carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Navigation arrows */
+.popup-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 1002;
+}
+
+.popup-nav:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: #008080;
+}
+
+.popup-nav.prev {
+  left: 20px;
+}
+
+.popup-nav.next {
+  right: 20px;
+}
+
+.popup-nav svg {
+  width: 24px;
+  height: 24px;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 2;
+  fill: none;
+}
+
+.popup-nav:hover svg {
+  stroke: #008080;
+}
+
+/* Loading state for popup images */
+.popup-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+/* Prevent body scroll when popup is open */
+body.popup-open {
+  overflow: hidden;
+}
+
+/* Smooth scrolling for carousel */
+.popup-carousel {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but keep functionality */
+.popup-carousel::-webkit-scrollbar {
+  height: 4px;
+}
+
+.popup-carousel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.popup-carousel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.popup-carousel::-webkit-scrollbar-thumb:hover {
+  background: #008080;
+}
+
+@media (max-width: 768px) {
+  .popup-controls {
+    padding: 10px 15px;
+  }
+  
+  .popup-control-btn {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .popup-main-container {
+    padding: 60px 10px 110px;
+  }
+  
+  .popup-nav {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .popup-nav.prev {
+    left: 10px;
+  }
+  
+  .popup-nav.next {
+    right: 10px;
+  }
+  
+  .popup-carousel {
+    height: 80px;
+    padding: 5px 10px;
+  }
+  
+  .carousel-item {
+    width: 100px;
+    height: 70px;
+  }
 }
