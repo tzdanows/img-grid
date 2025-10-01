@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A
+#!/usr/bin/env -S deno run --allow-net --allow-read --allow-env
 
 import { loadEnv } from "./lib/env.ts";
 import {
@@ -316,6 +316,17 @@ function getCloudinaryImagesByTag(
     console.error(`Unexpected error in cache handler for ${tag}:`, error);
     return [];
   }
+}
+
+function getSecurityHeaders(): HeadersInit {
+  return {
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy":
+      "default-src 'self'; img-src 'self' https://res.cloudinary.com data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self'",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+  };
 }
 
 function getDarkModeToggle(): string {
@@ -1029,7 +1040,10 @@ async function handler(req: Request): Promise<Response> {
   // Handle home route
   if (pathname === "/") {
     return new Response(generateHomePage(content), {
-      headers: { "Content-Type": "text/html" },
+      headers: {
+        "Content-Type": "text/html",
+        ...getSecurityHeaders(),
+      },
     });
   }
 
@@ -1038,7 +1052,10 @@ async function handler(req: Request): Promise<Response> {
   if (gallery) {
     const galleryPage = await generateGalleryPage(gallery, content);
     return new Response(galleryPage, {
-      headers: { "Content-Type": "text/html" },
+      headers: {
+        "Content-Type": "text/html",
+        ...getSecurityHeaders(),
+      },
     });
   }
 
@@ -1046,7 +1063,10 @@ async function handler(req: Request): Promise<Response> {
   if (pathname === "/inspo" || pathname === "/inspiration") {
     const inspoPage = await generateInspoPage(content);
     return new Response(inspoPage, {
-      headers: { "Content-Type": "text/html" },
+      headers: {
+        "Content-Type": "text/html",
+        ...getSecurityHeaders(),
+      },
     });
   }
 

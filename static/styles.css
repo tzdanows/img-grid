@@ -10,25 +10,25 @@
   --nord1: #3b4252;
   --nord2: #434c5e;
   --nord3: #4c566a;
-  
+
   /* Nord Snow Storm (light elements) */
   --nord4: #d8dee9;
   --nord5: #e5e9f0;
   --nord6: #eceff4;
-  
+
   /* Nord Frost (accent colors) */
-  --nord7: #8fbcbb;  /* Teal */
-  --nord8: #88c0d0;  /* Light blue */
-  --nord9: #81a1c1;  /* Blue */
+  --nord7: #8fbcbb; /* Teal */
+  --nord8: #88c0d0; /* Light blue */
+  --nord9: #81a1c1; /* Blue */
   --nord10: #5e81ac; /* Dark blue */
-  
+
   /* Nord Aurora (highlights) */
   --nord11: #bf616a; /* Red */
   --nord12: #d08770; /* Orange */
   --nord13: #ebcb8b; /* Yellow */
   --nord14: #a3be8c; /* Green */
   --nord15: #b48ead; /* Purple */
-  
+
   /* Light mode (default) */
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
@@ -897,7 +897,6 @@ body.popup-open {
     height: 70px;
   }
 }
-
 
 /* Dark mode toggle button */
 .theme-toggle {

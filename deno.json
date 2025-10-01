@@ -4,8 +4,8 @@
     "@std/http": "jsr:@std/http@^1.0.17"
   },
   "tasks": {
-    "dev": "deno run -A --watch=static/,lib/,content.json cloudinary-server.ts",
-    "start": "deno run -A cloudinary-server.ts",
+    "dev": "deno run --allow-net --allow-read --allow-env --watch=static/,lib/,content.json cloudinary-server.ts",
+    "start": "deno run --allow-net --allow-read --allow-env cloudinary-server.ts",
     "build": "echo 'No build step needed for Cloudinary server'",
     "check": "deno check **/*.ts",
     "fmt": "deno fmt",
