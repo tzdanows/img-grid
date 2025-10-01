@@ -503,6 +503,8 @@ async function generateGalleryPage(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${gallery.title} - ${content.site.owner.name}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -830,6 +832,8 @@ function generateInspoPage(content: SiteContent): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${content.inspiration.title} - ${content.site.owner.name}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -915,6 +919,8 @@ function generateHomePage(content: SiteContent): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${content.site.owner.name}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -1034,6 +1040,28 @@ async function handler(req: Request): Promise<Response> {
       });
     } catch {
       return new Response("CSS not found", { status: 404 });
+    }
+  }
+
+  if (pathname === "/favicon.svg") {
+    try {
+      const svg = await Deno.readTextFile("./static/favicon.svg");
+      return new Response(svg, {
+        headers: { "Content-Type": "image/svg+xml" },
+      });
+    } catch {
+      return new Response("Favicon not found", { status: 404 });
+    }
+  }
+
+  if (pathname === "/favicon.ico") {
+    try {
+      const ico = await Deno.readFile("./static/favicon.ico");
+      return new Response(ico, {
+        headers: { "Content-Type": "image/x-icon" },
+      });
+    } catch {
+      return new Response("Favicon not found", { status: 404 });
     }
   }
 
