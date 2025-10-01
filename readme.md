@@ -1,6 +1,6 @@
-# Media Showcase for hobbyists
+# media showcase for hobbyists
 
-A personal gallery for hobby photos & curated content:
+a personal gallery for hobby photos & curated content:
 
 ```bash
 Home
@@ -75,7 +75,7 @@ OR
 ### 6. Deploy Your Site
 
 ```bash
-deno task deploy
+deployctl deploy --project={YOUR-PROJECT-NAME} cloudinary-server.ts
 ```
 
 [read more here on deployment](https://docs.deno.com/deploy/manual/deployctl/)
@@ -87,7 +87,6 @@ deno task deploy
 - `deno task dev` - Development server with hot reload
 - `deno task add-links` - Add links to inspirations page
 - `deno task edit` - Edit all site content
-- `deno task deploy` - Deploy to Deno Deploy
 - `deno task test` - Run all tests
 - `deno task ci` - Full CI check (fmt, lint, test)
 
