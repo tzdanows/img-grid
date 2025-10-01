@@ -238,7 +238,7 @@ body {
 /* Hover colors now handled by nav-specific classes */
 
 .hover\:scale-105:hover {
-  transform: scale(1.05);
+  transform: scale(1.4);
 }
 
 .transition-colors {
@@ -434,7 +434,7 @@ body {
 
 /* Group hover utilities (for photo items) */
 .group:hover .group-hover\:scale-105 {
-  transform: scale(1.05);
+  transform: scale(1.4);
 }
 
 /* Responsive adjustments - Full span at all sizes */
