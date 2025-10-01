@@ -513,7 +513,7 @@ async function generateGalleryPage(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${gallery.title} - ${content.site.owner.name}</title>
+    <title>${gallery.title} - ${content.site.title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
@@ -841,7 +841,7 @@ function generateLinksPage(content: SiteContent): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${content.links.title} - ${content.site.owner.name}</title>
+    <title>${content.links.title} - ${content.site.title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
@@ -948,7 +948,7 @@ function generateHomePage(content: SiteContent): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${content.site.owner.name}</title>
+    <title>${content.site.title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
