@@ -146,6 +146,10 @@ interface SiteContent {
     owner: {
       name: string;
       bio: string;
+      bio2?: string;
+      bio3?: string;
+      bio4?: string;
+      bio5?: string;
       quote?: string;
       hobbies?: string[];
       social?: Record<string, string>;
@@ -164,7 +168,7 @@ interface SiteContent {
     cloudinaryTag: string;
     layout: string;
   }>;
-  inspiration: {
+  links: {
     title: string;
     description: string;
     sections: Array<{
@@ -206,8 +210,8 @@ async function loadContent(): Promise<SiteContent> {
         { id: "home", title: "Home", path: "/" },
       ],
       galleries: [],
-      inspiration: {
-        title: "Inspiration",
+      links: {
+        title: "Links",
         description: "Content that inspires",
         sections: [],
       },
@@ -238,7 +242,7 @@ function getCloudinaryImagesByTag(
         `📦 Using cached images for ${tag} (${cached.images.length} images)`,
       );
       cached.lastAccessed = now; // Update access time for LRU
-      return cached.images;
+      return Promise.resolve(cached.images);
     }
 
     // If a fetch is already in progress, return the existing promise
@@ -314,7 +318,7 @@ function getCloudinaryImagesByTag(
     });
   } catch (error) {
     console.error(`Unexpected error in cache handler for ${tag}:`, error);
-    return [];
+    return Promise.resolve([]);
   }
 }
 
@@ -807,11 +811,9 @@ async function generateGalleryPage(
 </html>`;
 }
 
-function generateInspoPage(content: SiteContent): string {
+function generateLinksPage(content: SiteContent): string {
   // Flatten all items from all sections into a single list
-  const allItems = content.inspiration.sections.flatMap((section) =>
-    section.items
-  );
+  const allItems = content.links.sections.flatMap((section) => section.items);
 
   const items = allItems.map((item) => `
     <li class="simple-content-item">
@@ -831,7 +833,7 @@ function generateInspoPage(content: SiteContent): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${content.inspiration.title} - ${content.site.owner.name}</title>
+    <title>${content.links.title} - ${content.site.owner.name}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
@@ -839,12 +841,12 @@ function generateInspoPage(content: SiteContent): string {
 <body>
     <div class="min-h-screen">
         ${generateNavigation(content)}
-        
+
         <main class="max-w-2xl mx-auto px-4 py-8">
-            <h1 class="homepage-title mb-8">${content.inspiration.title.toLowerCase()}.</h1>
-            
+            <h1 class="homepage-title mb-8">${content.links.title.toLowerCase()}.</h1>
+
             <p class="content-description mb-8">
-                ${content.inspiration.description}
+                ${content.links.description}
             </p>
 
             <ul class="simple-content-list">
@@ -852,9 +854,9 @@ function generateInspoPage(content: SiteContent): string {
             </ul>
         </main>
     </div>
-    
+
     ${getDarkModeToggle()}
-    
+
     <script>
         ${getDarkModeScript()}
     </script>
@@ -863,9 +865,28 @@ function generateInspoPage(content: SiteContent): string {
 }
 
 function generateHomePage(content: SiteContent): string {
-  // Parse bio which may contain multiple paragraphs separated by |
-  const bioParagraphs = content.site.owner.bio.split("|").map((p) => p.trim())
-    .filter((p) => p.length > 0);
+  // Collect all bio paragraphs (bio, bio2, bio3, bio4, bio5)
+  const bioParagraphs: string[] = [];
+
+  // Add main bio (handle legacy format with | separators)
+  if (content.site.owner.bio) {
+    if (content.site.owner.bio.includes("|")) {
+      // Legacy format: split by |
+      bioParagraphs.push(
+        ...content.site.owner.bio.split("|").map((p) => p.trim()).filter((p) =>
+          p.length > 0
+        ),
+      );
+    } else {
+      bioParagraphs.push(content.site.owner.bio);
+    }
+  }
+
+  // Add additional bios
+  if (content.site.owner.bio2) bioParagraphs.push(content.site.owner.bio2);
+  if (content.site.owner.bio3) bioParagraphs.push(content.site.owner.bio3);
+  if (content.site.owner.bio4) bioParagraphs.push(content.site.owner.bio4);
+  if (content.site.owner.bio5) bioParagraphs.push(content.site.owner.bio5);
 
   // Generate bio HTML with bold first word of first paragraph
   const bioHtml = bioParagraphs.map((paragraph, index) => {
@@ -1087,10 +1108,13 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  // Handle inspiration/inspo route
-  if (pathname === "/inspo" || pathname === "/inspiration") {
-    const inspoPage = await generateInspoPage(content);
-    return new Response(inspoPage, {
+  // Handle links route (legacy /inspo redirect)
+  if (
+    pathname === "/links" || pathname === "/inspo" ||
+    pathname === "/inspiration"
+  ) {
+    const linksPage = generateLinksPage(content);
+    return new Response(linksPage, {
       headers: {
         "Content-Type": "text/html",
         ...getSecurityHeaders(),

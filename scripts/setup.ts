@@ -3,6 +3,7 @@
 import {
   Confirm,
   Input,
+  Number,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
 
 interface SiteContent {
@@ -12,6 +13,10 @@ interface SiteContent {
     owner: {
       name: string;
       bio: string;
+      bio2?: string;
+      bio3?: string;
+      bio4?: string;
+      bio5?: string;
       quote?: string;
       hobbies?: string[];
       social?: Record<string, string>;
@@ -30,7 +35,7 @@ interface SiteContent {
     cloudinaryTag: string;
     layout: string;
   }>;
-  inspiration: {
+  links: {
     title: string;
     description: string;
     sections: Array<{
@@ -67,19 +72,32 @@ async function setupSite() {
     default: "untitled",
   });
 
-  // Main bio/description - can be multiple paragraphs
-  console.log(
-    "\n📝 Main Description (you can use \\n for multiple paragraphs)",
-  );
-  const rawDescription = await Input.prompt({
-    message: "Main site description:",
+  // Main bio
+  console.log("\n📝 Bio Section");
+  const mainBio = await Input.prompt({
+    message: "Main bio (bio1):",
     default:
       "I made this site to provide a platform to share media associated with my interests. I hope you'll enjoy your stay",
   });
 
-  // Process description to handle multiple paragraphs
-  const descriptionParagraphs = rawDescription.split("\\n").map((p) => p.trim())
-    .filter((p) => p.length > 0);
+  // Additional bios (optional)
+  const numAdditionalBios = await Number.prompt({
+    message: "How many additional bio paragraphs? (0-4):",
+    default: 0,
+    min: 0,
+    max: 4,
+  });
+
+  const additionalBios: string[] = [];
+  for (let i = 0; i < numAdditionalBios; i++) {
+    const bio = await Input.prompt({
+      message: `Bio ${i + 2}:`,
+      default: "",
+    });
+    if (bio.trim()) {
+      additionalBios.push(bio);
+    }
+  }
 
   // Quote (optional)
   const ownerQuote = await Input.prompt({
@@ -124,17 +142,17 @@ async function setupSite() {
     });
   }
 
-  // Add inspo page
-  const hasInspo = await Confirm.prompt({
-    message: "Include inspiration page?",
+  // Add links page
+  const hasLinks = await Confirm.prompt({
+    message: "Include links page?",
     default: true,
   });
 
-  if (hasInspo) {
+  if (hasLinks) {
     navigation.push({
-      id: "inspo",
-      title: "Inspo",
-      path: "/inspo",
+      id: "links",
+      title: "Links",
+      path: "/links",
     });
   }
 
@@ -150,26 +168,34 @@ async function setupSite() {
     : [];
 
   // Create content
+  const owner: SiteContent["site"]["owner"] = {
+    name: ownerName,
+    bio: mainBio,
+    quote: ownerQuote.length > 0 ? ownerQuote : undefined,
+    hobbies: hobbies.length > 0 ? hobbies : undefined,
+  };
+
+  // Add additional bios
+  if (additionalBios.length > 0) owner.bio2 = additionalBios[0];
+  if (additionalBios.length > 1) owner.bio3 = additionalBios[1];
+  if (additionalBios.length > 2) owner.bio4 = additionalBios[2];
+  if (additionalBios.length > 3) owner.bio5 = additionalBios[3];
+
   const content: SiteContent = {
     site: {
       title: siteTitle,
       description: "Personal gallery for photos & curated content",
-      owner: {
-        name: ownerName,
-        bio: descriptionParagraphs.join("|"), // Using | as paragraph separator
-        quote: ownerQuote.length > 0 ? ownerQuote : undefined,
-        hobbies: hobbies.length > 0 ? hobbies : undefined,
-      },
+      owner: owner,
     },
     navigation: navigation,
     galleries: galleries,
-    inspiration: {
-      title: "Inspiration",
+    links: {
+      title: "Links",
       description: "Content that inspires",
-      sections: hasInspo
+      sections: hasLinks
         ? [
           {
-            title: "Videos",
+            title: "Links",
             items: [],
           },
         ]

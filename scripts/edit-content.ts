@@ -3,6 +3,7 @@
 import {
   Confirm,
   Input,
+  Number,
   Select,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
 
@@ -13,6 +14,12 @@ interface SiteContent {
     owner: {
       name: string;
       bio: string;
+      bio2?: string;
+      bio3?: string;
+      bio4?: string;
+      bio5?: string;
+      quote?: string;
+      hobbies?: string[];
       social?: Record<string, string>;
     };
   };
@@ -29,7 +36,7 @@ interface SiteContent {
     cloudinaryTag: string;
     layout: string;
   }>;
-  inspiration: {
+  links: {
     title: string;
     description: string;
     sections: Array<{
@@ -74,11 +81,11 @@ function createDefaultContent(): SiteContent {
       },
     },
     navigation: [
-      { id: "home", title: "Home", path: "/", icon: "🏠" },
+      { id: "home", title: "Home", path: "/" },
     ],
     galleries: [],
-    inspiration: {
-      title: "Inspiration",
+    links: {
+      title: "Links",
       description: "Content that inspires and educates",
       sections: [],
     },
@@ -96,33 +103,240 @@ async function saveContent(content: SiteContent): Promise<void> {
   console.log("✅ Content saved to content.json");
 }
 
-async function editSiteInfo(content: SiteContent): Promise<void> {
-  console.log("\n📝 Edit Site Information\n");
-
-  content.site.title = await Input.prompt({
-    message: "Site title:",
-    default: content.site.title,
-  });
-
-  content.site.description = await Input.prompt({
-    message: "Site description:",
-    default: content.site.description,
-  });
-
-  content.site.owner.name = await Input.prompt({
-    message: "Your name:",
-    default: content.site.owner.name,
-  });
-
-  content.site.owner.bio = await Input.prompt({
-    message: "Your bio:",
-    default: content.site.owner.bio,
-  });
+function isValidUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
+// Homepage management
+async function manageHomepage(content: SiteContent): Promise<void> {
+  while (true) {
+    console.log("\n🏠 Homepage Management\n");
+    console.log("Current sections:");
+    console.log(`  1. bio1: ${content.site.owner.bio.substring(0, 50)}...`);
+    if (content.site.owner.bio2) {
+      console.log(
+        `  2. bio2: ${content.site.owner.bio2.substring(0, 50)}...`,
+      );
+    }
+    if (content.site.owner.bio3) {
+      console.log(
+        `  3. bio3: ${content.site.owner.bio3.substring(0, 50)}...`,
+      );
+    }
+    if (content.site.owner.bio4) {
+      console.log(
+        `  4. bio4: ${content.site.owner.bio4.substring(0, 50)}...`,
+      );
+    }
+    if (content.site.owner.bio5) {
+      console.log(
+        `  5. bio5: ${content.site.owner.bio5.substring(0, 50)}...`,
+      );
+    }
+    if (content.site.owner.hobbies && content.site.owner.hobbies.length > 0) {
+      console.log(
+        `  - hobbies: ${content.site.owner.hobbies.join(", ")}`,
+      );
+    }
+    if (content.site.owner.quote) {
+      console.log(`  - quote: "${content.site.owner.quote}"`);
+    }
+
+    const options = [
+      { value: "edit-bio1", name: "Edit bio1 (main bio)" },
+    ];
+
+    // Add edit options for existing bios
+    if (content.site.owner.bio2) {
+      options.push({ value: "edit-bio2", name: "Edit bio2" });
+    }
+    if (content.site.owner.bio3) {
+      options.push({ value: "edit-bio3", name: "Edit bio3" });
+    }
+    if (content.site.owner.bio4) {
+      options.push({ value: "edit-bio4", name: "Edit bio4" });
+    }
+    if (content.site.owner.bio5) {
+      options.push({ value: "edit-bio5", name: "Edit bio5" });
+    }
+
+    // Add "add bio" option if we haven't reached the limit
+    const bioCount = [
+      content.site.owner.bio,
+      content.site.owner.bio2,
+      content.site.owner.bio3,
+      content.site.owner.bio4,
+      content.site.owner.bio5,
+    ].filter(Boolean).length;
+
+    if (bioCount < 5) {
+      options.push({ value: "add-bio", name: `Add bio${bioCount + 1}` });
+    }
+
+    // Add remove bio options
+    if (content.site.owner.bio5) {
+      options.push({ value: "remove-bio5", name: "Remove bio5" });
+    }
+    if (content.site.owner.bio4) {
+      options.push({ value: "remove-bio4", name: "Remove bio4" });
+    }
+    if (content.site.owner.bio3) {
+      options.push({ value: "remove-bio3", name: "Remove bio3" });
+    }
+    if (content.site.owner.bio2) {
+      options.push({ value: "remove-bio2", name: "Remove bio2" });
+    }
+
+    options.push(
+      { value: "edit-hobbies", name: "Edit hobbies" },
+      { value: "edit-quote", name: "Edit quote" },
+      { value: "back", name: "Back to main menu" },
+    );
+
+    // @ts-ignore: Cliffy returns value string despite options being objects
+    const action: string = await Select.prompt({
+      message: "What would you like to do?",
+      options: options,
+    });
+
+    if (action === "back") break;
+
+    switch (action) {
+      case "edit-bio1":
+        content.site.owner.bio = await Input.prompt({
+          message: "Bio1 (main bio):",
+          default: content.site.owner.bio,
+        });
+        console.log("✅ Bio1 updated");
+        break;
+
+      case "edit-bio2":
+        content.site.owner.bio2 = await Input.prompt({
+          message: "Bio2:",
+          default: content.site.owner.bio2 || "",
+        });
+        console.log("✅ Bio2 updated");
+        break;
+
+      case "edit-bio3":
+        content.site.owner.bio3 = await Input.prompt({
+          message: "Bio3:",
+          default: content.site.owner.bio3 || "",
+        });
+        console.log("✅ Bio3 updated");
+        break;
+
+      case "edit-bio4":
+        content.site.owner.bio4 = await Input.prompt({
+          message: "Bio4:",
+          default: content.site.owner.bio4 || "",
+        });
+        console.log("✅ Bio4 updated");
+        break;
+
+      case "edit-bio5":
+        content.site.owner.bio5 = await Input.prompt({
+          message: "Bio5:",
+          default: content.site.owner.bio5 || "",
+        });
+        console.log("✅ Bio5 updated");
+        break;
+
+      case "add-bio": {
+        const bioNum = bioCount + 1;
+        const bioText = await Input.prompt({
+          message: `Bio${bioNum}:`,
+          default: "",
+        });
+
+        if (bioText.trim()) {
+          if (bioNum === 2) content.site.owner.bio2 = bioText;
+          else if (bioNum === 3) content.site.owner.bio3 = bioText;
+          else if (bioNum === 4) content.site.owner.bio4 = bioText;
+          else if (bioNum === 5) content.site.owner.bio5 = bioText;
+
+          console.log(`✅ Bio${bioNum} added`);
+        }
+        break;
+      }
+
+      case "remove-bio2":
+        if (await Confirm.prompt("Remove bio2?")) {
+          content.site.owner.bio2 = undefined;
+          console.log("✅ Bio2 removed");
+        }
+        break;
+
+      case "remove-bio3":
+        if (await Confirm.prompt("Remove bio3?")) {
+          content.site.owner.bio3 = undefined;
+          console.log("✅ Bio3 removed");
+        }
+        break;
+
+      case "remove-bio4":
+        if (await Confirm.prompt("Remove bio4?")) {
+          content.site.owner.bio4 = undefined;
+          console.log("✅ Bio4 removed");
+        }
+        break;
+
+      case "remove-bio5":
+        if (await Confirm.prompt("Remove bio5?")) {
+          content.site.owner.bio5 = undefined;
+          console.log("✅ Bio5 removed");
+        }
+        break;
+
+      case "edit-hobbies": {
+        const currentHobbies = content.site.owner.hobbies?.join(", ") || "";
+        const hobbyInput = await Input.prompt({
+          message: "Hobbies (comma-separated, or press Enter to remove):",
+          default: currentHobbies,
+        });
+
+        if (hobbyInput.trim()) {
+          content.site.owner.hobbies = hobbyInput
+            .split(",")
+            .map((h) => h.trim())
+            .filter((h) => h.length > 0);
+          console.log("✅ Hobbies updated");
+        } else {
+          content.site.owner.hobbies = undefined;
+          console.log("✅ Hobbies removed");
+        }
+        break;
+      }
+
+      case "edit-quote": {
+        const currentQuote = content.site.owner.quote || "";
+        const quoteInput = await Input.prompt({
+          message: "Quote (or press Enter to remove):",
+          default: currentQuote,
+        });
+
+        if (quoteInput.trim()) {
+          content.site.owner.quote = quoteInput;
+          console.log("✅ Quote updated");
+        } else {
+          content.site.owner.quote = undefined;
+          console.log("✅ Quote removed");
+        }
+        break;
+      }
+    }
+  }
+}
+
+// Gallery management
 async function manageGalleries(content: SiteContent): Promise<void> {
   while (true) {
-    console.log("\n🖼️  Gallery Management\n");
+    console.log("\n📸 Gallery Management\n");
     console.log("Current galleries:");
     content.galleries.forEach((g, i) => {
       console.log(`  ${i + 1}. ${g.title} (tag: ${g.cloudinaryTag})`);
@@ -142,10 +356,22 @@ async function manageGalleries(content: SiteContent): Promise<void> {
 
     switch (action) {
       case "add": {
-        const id = await Input.prompt("Gallery ID (used in URL):");
-        const title = await Input.prompt("Gallery title:");
-        const description = await Input.prompt("Gallery description:");
-        const cloudinaryTag = await Input.prompt("Cloudinary tag:");
+        const id = await Input.prompt({
+          message: "Gallery ID (used in URL):",
+          validate: (v) => v.length > 0 || "ID is required",
+        });
+        const title = await Input.prompt({
+          message: "Gallery title:",
+          default: id,
+        });
+        const description = await Input.prompt({
+          message: "Gallery description:",
+          default: `${title} photography`,
+        });
+        const cloudinaryTag = await Input.prompt({
+          message: "Cloudinary tag:",
+          default: id.toLowerCase(),
+        });
 
         content.galleries.push({
           id,
@@ -161,7 +387,6 @@ async function manageGalleries(content: SiteContent): Promise<void> {
             id,
             title,
             path: `/${id}`,
-            icon: "📸",
           });
         }
 
@@ -180,7 +405,8 @@ async function manageGalleries(content: SiteContent): Promise<void> {
             message: "Gallery number to edit:",
             validate: (v) => {
               const n = parseInt(v);
-              return n > 0 && n <= content.galleries.length;
+              return (n > 0 && n <= content.galleries.length) ||
+                "Invalid gallery number";
             },
           }),
         ) - 1;
@@ -199,6 +425,14 @@ async function manageGalleries(content: SiteContent): Promise<void> {
           default: gallery.cloudinaryTag,
         });
 
+        // Update navigation
+        const navItem = content.navigation.find((n) =>
+          n.path === `/${gallery.id}`
+        );
+        if (navItem) {
+          navItem.title = gallery.title;
+        }
+
         console.log("✅ Gallery updated");
         break;
       }
@@ -214,7 +448,8 @@ async function manageGalleries(content: SiteContent): Promise<void> {
             message: "Gallery number to remove:",
             validate: (v) => {
               const n = parseInt(v);
-              return n > 0 && n <= content.galleries.length;
+              return (n > 0 && n <= content.galleries.length) ||
+                "Invalid gallery number";
             },
           }),
         ) - 1;
@@ -241,216 +476,171 @@ async function manageGalleries(content: SiteContent): Promise<void> {
   }
 }
 
-async function manageInspiration(content: SiteContent): Promise<void> {
+// Links management
+async function manageLinks(content: SiteContent): Promise<void> {
   while (true) {
-    console.log("\n✨ Inspiration Content Management\n");
-    console.log("Current sections:");
-    content.inspiration.sections.forEach((s, i) => {
-      console.log(`  ${i + 1}. ${s.title} (${s.items.length} items)`);
-    });
+    console.log("\n🔗 Links Management\n");
+
+    const totalLinks = content.links.sections.reduce(
+      (sum, section) => sum + section.items.length,
+      0,
+    );
+
+    console.log(`Current links: ${totalLinks}`);
+    if (totalLinks > 0) {
+      console.log("\nLinks:");
+      content.links.sections.forEach((section) => {
+        section.items.forEach((item, i) => {
+          console.log(`  ${i + 1}. ${item.title} - ${item.url}`);
+        });
+      });
+    }
 
     const action = await Select.prompt({
       message: "What would you like to do?",
       options: [
-        { value: "add-section", name: "Add new section" },
-        { value: "add-item", name: "Add item to section" },
-        { value: "edit-item", name: "Edit existing item" },
-        { value: "remove-item", name: "Remove item" },
-        { value: "remove-section", name: "Remove section" },
+        { value: "add", name: "Add link(s)" },
+        { value: "edit", name: "Edit existing link" },
+        { value: "remove", name: "Remove link" },
         { value: "back", name: "Back to main menu" },
       ],
     });
 
     if (action === "back") break;
 
+    // Ensure we have at least one section
+    if (content.links.sections.length === 0) {
+      content.links.sections.push({
+        title: "Links",
+        items: [],
+      });
+    }
+
+    const sectionIndex = 0; // Always use the first section
+
     switch (action) {
-      case "add-section": {
-        const title = await Input.prompt("Section title:");
-        content.inspiration.sections.push({
-          title,
-          items: [],
+      case "add": {
+        const numLinks = await Number.prompt({
+          message: "How many links to add?",
+          default: 1,
+          min: 1,
+          max: 20,
         });
-        console.log("✅ Section added");
+
+        console.log(`\n🔗 Adding ${numLinks} link(s):\n`);
+
+        for (let i = 0; i < numLinks; i++) {
+          console.log(`\nLink ${i + 1}:`);
+
+          const title = await Input.prompt({
+            message: "Link title:",
+            validate: (value) => value.length > 0 || "Title is required",
+          });
+
+          const url = await Input.prompt({
+            message: "URL:",
+            validate: (value) => {
+              if (!isValidUrl(value)) {
+                return "Please enter a valid URL (must start with http:// or https://)";
+              }
+              return true;
+            },
+          });
+
+          const description = await Input.prompt({
+            message: "Description (optional, press Enter to skip):",
+            default: "",
+          });
+
+          content.links.sections[sectionIndex].items.push({
+            title,
+            url,
+            type: "link",
+            description: description || undefined,
+          });
+
+          console.log(`✅ Added "${title}"`);
+        }
         break;
       }
 
-      case "add-item": {
-        if (content.inspiration.sections.length === 0) {
-          console.log("Please add a section first");
+      case "edit": {
+        if (totalLinks === 0) {
+          console.log("No links to edit");
           continue;
         }
 
-        const sectionIndex = parseInt(
-          await Input.prompt({
-            message: "Section number:",
-            validate: (v) => {
-              const n = parseInt(v);
-              return n > 0 && n <= content.inspiration.sections.length;
-            },
-          }),
-        ) - 1;
+        const allItems = content.links.sections.flatMap((s) => s.items);
 
-        const title = await Input.prompt("Item title:");
-        const url = await Input.prompt("Item URL:");
-        const description = await Input.prompt("Item description (optional):");
-
-        const itemType = url.includes("youtube.com") || url.includes("youtu.be")
-          ? "video"
-          : "link";
-
-        content.inspiration.sections[sectionIndex].items.push({
-          title,
-          url,
-          type: itemType,
-          description: description || undefined,
-        });
-
-        console.log("✅ Item added");
-        break;
-      }
-
-      case "edit-item": {
-        if (content.inspiration.sections.length === 0) {
-          console.log("No sections available");
-          continue;
-        }
-
-        // Select section
-        const sectionIndex = parseInt(
-          await Input.prompt({
-            message: "Section number:",
-            validate: (v) => {
-              const n = parseInt(v);
-              return n > 0 && n <= content.inspiration.sections.length;
-            },
-          }),
-        ) - 1;
-
-        const section = content.inspiration.sections[sectionIndex];
-        if (section.items.length === 0) {
-          console.log("No items in this section");
-          continue;
-        }
-
-        // Show items
-        console.log("\nItems in this section:");
-        section.items.forEach((item, i) => {
-          console.log(`  ${i + 1}. ${item.title} (${item.type})`);
-        });
-
-        // Select item
         const itemIndex = parseInt(
           await Input.prompt({
-            message: "Item number to edit:",
+            message: "Link number to edit:",
             validate: (v) => {
               const n = parseInt(v);
-              return n > 0 && n <= section.items.length;
+              return (n > 0 && n <= allItems.length) || "Invalid link number";
             },
           }),
         ) - 1;
 
-        const item = section.items[itemIndex];
+        const item = allItems[itemIndex];
 
-        // Edit item
         item.title = await Input.prompt({
-          message: "Item title:",
+          message: "Link title:",
           default: item.title,
         });
 
         item.url = await Input.prompt({
-          message: "Item URL:",
+          message: "URL:",
           default: item.url,
+          validate: (value) => {
+            if (!isValidUrl(value)) {
+              return "Please enter a valid URL";
+            }
+            return true;
+          },
         });
 
         const newDescription = await Input.prompt({
-          message: "Item description:",
+          message: "Description:",
           default: item.description || "",
         });
 
         item.description = newDescription || undefined;
-        item.type =
-          (item.url.includes("youtube.com") || item.url.includes("youtu.be"))
-            ? "video"
-            : "link";
-
-        console.log("✅ Item updated");
+        console.log("✅ Link updated");
         break;
       }
 
-      case "remove-item": {
-        if (content.inspiration.sections.length === 0) {
-          console.log("No sections available");
+      case "remove": {
+        if (totalLinks === 0) {
+          console.log("No links to remove");
           continue;
         }
 
-        // Select section
-        const sectionIndex = parseInt(
-          await Input.prompt({
-            message: "Section number:",
-            validate: (v) => {
-              const n = parseInt(v);
-              return n > 0 && n <= content.inspiration.sections.length;
-            },
-          }),
-        ) - 1;
+        const allItems = content.links.sections.flatMap((s) => s.items);
 
-        const section = content.inspiration.sections[sectionIndex];
-        if (section.items.length === 0) {
-          console.log("No items in this section");
-          continue;
-        }
-
-        // Show items
-        console.log("\nItems in this section:");
-        section.items.forEach((item, i) => {
-          console.log(`  ${i + 1}. ${item.title} (${item.type})`);
-        });
-
-        // Select item to remove
         const itemIndex = parseInt(
           await Input.prompt({
-            message: "Item number to remove:",
+            message: "Link number to remove:",
             validate: (v) => {
               const n = parseInt(v);
-              return n > 0 && n <= section.items.length;
+              return (n > 0 && n <= allItems.length) || "Invalid link number";
             },
           }),
         ) - 1;
 
-        const item = section.items[itemIndex];
+        const item = allItems[itemIndex];
         const confirm = await Confirm.prompt(`Remove "${item.title}"?`);
 
         if (confirm) {
-          section.items.splice(itemIndex, 1);
-          console.log("✅ Item removed");
-        }
-        break;
-      }
-
-      case "remove-section": {
-        if (content.inspiration.sections.length === 0) {
-          console.log("No sections to remove");
-          continue;
-        }
-
-        const sectionIndex = parseInt(
-          await Input.prompt({
-            message: "Section number to remove:",
-            validate: (v) => {
-              const n = parseInt(v);
-              return n > 0 && n <= content.inspiration.sections.length;
-            },
-          }),
-        ) - 1;
-
-        const section = content.inspiration.sections[sectionIndex];
-        const confirm = await Confirm.prompt(
-          `Remove section "${section.title}"?`,
-        );
-
-        if (confirm) {
-          content.inspiration.sections.splice(sectionIndex, 1);
-          console.log("✅ Section removed");
+          // Find and remove the item
+          for (const section of content.links.sections) {
+            const idx = section.items.indexOf(item);
+            if (idx > -1) {
+              section.items.splice(idx, 1);
+              break;
+            }
+          }
+          console.log("✅ Link removed");
         }
         break;
       }
@@ -467,32 +657,32 @@ async function main() {
     const action = await Select.prompt({
       message: "What would you like to edit?",
       options: [
-        { value: "site", name: "Site information" },
-        { value: "galleries", name: "Photo galleries" },
-        { value: "inspiration", name: "Inspiration content" },
+        { value: "homepage", name: "Homepage (bio, hobbies, quote)" },
+        { value: "galleries", name: "Galleries (photo collections)" },
+        { value: "links", name: "Links (inspiration page)" },
         { value: "save", name: "Save and exit" },
         { value: "exit", name: "Exit without saving" },
       ],
     });
 
     switch (action) {
-      case "site":
-        await editSiteInfo(content);
+      case "homepage":
+        await manageHomepage(content);
         break;
 
       case "galleries":
         await manageGalleries(content);
         break;
 
-      case "inspiration":
-        await manageInspiration(content);
+      case "links":
+        await manageLinks(content);
         break;
 
       case "save":
         await saveContent(content);
         console.log("\n👋 Goodbye! Run 'deno task dev' to see your changes.");
         Deno.exit(0);
-        break; // This is never reached but fixes lint
+        break;
 
       case "exit": {
         const confirm = await Confirm.prompt("Exit without saving?");

@@ -1,22 +1,27 @@
 {
   "site": {
-    "title": "photorange",
-    "description": "personal gallery for photos & curated content",
+    "title": "img-grid-example",
+    "description": "Personal gallery for photos & curated content",
     "owner": {
       "name": "Pablo Picasso",
       "bio": "hi! I made this site to showcase my photography and art. I really do hope you enjoy.",
-      "quote": "Everything you can imagine is real",
+      "quote": "Everything you can imagine is real.",
       "hobbies": [
-        "art",
-        "photography",
-        "pondering"
-      ]
+        "programming",
+        "keyboards",
+        "esports",
+        "lifting",
+        "cooking",
+        "art"
+      ],
+      "bio2": "yet another bio component",
+      "bio3": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged."
     }
   },
   "navigation": [
     {
       "id": "home",
-      "title": "home",
+      "title": "Home",
       "path": "/"
     },
     {
@@ -35,9 +40,9 @@
       "path": "/street"
     },
     {
-      "id": "inspo",
-      "title": "inspo",
-      "path": "/inspo"
+      "id": "links",
+      "title": "Links",
+      "path": "/links"
     }
   ],
   "galleries": [
@@ -63,22 +68,22 @@
       "layout": "grid"
     }
   ],
-  "inspiration": {
-    "title": "inspiration",
-    "description": "content that inspires me",
+  "links": {
+    "title": "Links",
+    "description": "Content that inspires",
     "sections": [
       {
-        "title": "Videos",
+        "title": "Links",
         "items": [
           {
             "title": "playing cave on ancient",
             "url": "https://youtu.be/QxV6PH22FRs",
-            "type": "video",
-            "description": "anubis enthusiasts unite"
+            "type": "link",
+            "description": "anubis enjoyers unite"
           },
           {
             "title": "expanding chicago's 606 trail",
-            "url": "https://youtu.be/Zq281tP9DVQ",
+            "url": "https://youtu.be/Zq281tP9DVQ\"",
             "type": "link",
             "description": "o7"
           },
@@ -86,13 +91,12 @@
             "title": "img-grid github",
             "url": "https://github.com/tzdanows/img-grid",
             "type": "link",
-            "description": "this website's source code!"
+            "description": "this site's source code"
           },
           {
             "title": "wordle",
             "url": "https://www.nytimes.com/games/wordle/index.html",
-            "type": "link",
-            "description": "nyt/wordle"
+            "type": "link"
           }
         ]
       }
