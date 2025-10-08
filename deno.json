@@ -17,7 +17,20 @@
     "add-links": "deno run -A scripts/add-links.ts"
   },
   "test": {
-    "include": ["tests/"],
-    "exclude": ["static/", "node_modules/"]
+    "include": [
+      "tests/"
+    ],
+    "exclude": [
+      "static/",
+      "node_modules/"
+    ]
+  },
+  "deploy": {
+    "project": "7487c3cb-6d23-46f9-a4b5-ec7d371f46d3",
+    "exclude": [
+      "**/node_modules"
+    ],
+    "include": [],
+    "entrypoint": "cloudinary-server.ts"
   }
 }

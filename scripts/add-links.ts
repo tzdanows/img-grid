@@ -12,6 +12,10 @@ interface SiteContent {
     owner: {
       name: string;
       bio: string;
+      bio2?: string;
+      bio3?: string;
+      bio4?: string;
+      bio5?: string;
       quote?: string;
       hobbies?: string[];
       social?: Record<string, string>;
@@ -30,7 +34,7 @@ interface SiteContent {
     cloudinaryTag: string;
     layout: string;
   }>;
-  inspiration: {
+  links: {
     title: string;
     description: string;
     sections: Array<{
@@ -79,23 +83,23 @@ function isValidUrl(url: string): boolean {
 }
 
 async function addLinks() {
-  console.log("🔗 Add Links to Inspiration Page\n");
+  console.log("🔗 Add Links to Links Page\n");
 
   // Load existing content
   const content = await loadContent();
 
-  // Ensure inspiration section exists
-  if (!content.inspiration) {
-    content.inspiration = {
-      title: "Inspiration",
+  // Ensure links section exists
+  if (!content.links) {
+    content.links = {
+      title: "Links",
       description: "Content that inspires",
       sections: [],
     };
   }
 
   // Ensure we have at least one section (for backward compatibility)
-  if (content.inspiration.sections.length === 0) {
-    content.inspiration.sections.push({
+  if (content.links.sections.length === 0) {
+    content.links.sections.push({
       title: "Links",
       items: [],
     });
@@ -105,12 +109,12 @@ async function addLinks() {
   const sectionIndex = 0;
 
   // Show current link count
-  const totalLinks = content.inspiration.sections.reduce(
+  const totalLinks = content.links.sections.reduce(
     (sum, section) => sum + section.items.length,
     0,
   );
   if (totalLinks > 0) {
-    console.log(`📊 Currently ${totalLinks} link(s) on the inspiration page\n`);
+    console.log(`📊 Currently ${totalLinks} link(s) on the links page\n`);
   }
 
   // Ask how many links to add
@@ -148,7 +152,7 @@ async function addLinks() {
     });
 
     // Add link to section
-    content.inspiration.sections[sectionIndex].items.push({
+    content.links.sections[sectionIndex].items.push({
       title,
       url,
       type: "link", // Always use generic "link" type
@@ -162,12 +166,12 @@ async function addLinks() {
   await saveContent(content);
 
   // Summary
-  const newTotalLinks = content.inspiration.sections.reduce(
+  const newTotalLinks = content.links.sections.reduce(
     (sum, section) => sum + section.items.length,
     0,
   );
   console.log("\n🎉 Links added successfully!");
-  console.log(`\n📊 Total links on inspiration page: ${newTotalLinks}`);
+  console.log(`\n📊 Total links on links page: ${newTotalLinks}`);
   console.log("\n💡 Tips:");
   console.log("- Run 'deno task dev' to see your changes");
   console.log("- Run 'deno task edit' to manage all content");
