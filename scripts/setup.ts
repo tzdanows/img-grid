@@ -65,13 +65,6 @@ async function setupSite() {
     default: "My Portfolio",
   });
 
-  // Owner information
-  console.log("\n👤 Personal Information");
-  const ownerName = await Input.prompt({
-    message: "Your name:",
-    default: "untitled",
-  });
-
   // Main bio
   console.log("\n📝 Bio Section");
   const mainBio = await Input.prompt({
@@ -99,7 +92,19 @@ async function setupSite() {
     }
   }
 
+  // Hobbies (optional)
+  console.log("\n🎯 Hobbies");
+  const hobbyInput = await Input.prompt({
+    message: "Your hobbies (comma-separated, or press Enter to skip):",
+    default: "",
+  });
+
+  const hobbies = hobbyInput
+    ? hobbyInput.split(",").map((h) => h.trim()).filter((h) => h.length > 0)
+    : [];
+
   // Quote (optional)
+  console.log("\n💭 Quote");
   const ownerQuote = await Input.prompt({
     message: "Favorite quote (optional, press Enter to skip):",
     default: "",
@@ -156,20 +161,9 @@ async function setupSite() {
     });
   }
 
-  // Hobbies (optional)
-  console.log("\n🎯 Hobbies (optional - leave empty to skip this section)");
-  const hobbyInput = await Input.prompt({
-    message: "Your hobbies (comma-separated, or press Enter to skip):",
-    default: "",
-  });
-
-  const hobbies = hobbyInput
-    ? hobbyInput.split(",").map((h) => h.trim()).filter((h) => h.length > 0)
-    : [];
-
   // Create content
   const owner: SiteContent["site"]["owner"] = {
-    name: ownerName,
+    name: "untitled",
     bio: mainBio,
     quote: ownerQuote.length > 0 ? ownerQuote : undefined,
     hobbies: hobbies.length > 0 ? hobbies : undefined,
